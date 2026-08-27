@@ -1,0 +1,2920 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>JUMANAR — Cotizador</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js" onerror="window.__exceljsFailed=true;"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root{
+  /* --- JUMANAR · Identidad Visual V2.6 ---
+     Verde Institucional #1F4D4D · Verde Salvia #A7B897 · Beige Cálido #DCCDBA
+     Crema #F6F3EC · Gris Topo #7B7062 · Arena #E9E1D6
+     (nombres de variable heredados del sistema anterior; solo se remapean los valores) */
+  --walnut-900:#1F4D4D;   /* Verde Institucional — sidebar, marca */
+  --walnut-800:#2A5C5C;   /* Verde Institucional, tono claro (degradado sidebar) */
+  --walnut-700:#3B6B6B;   /* Verde Institucional, tono más claro aún */
+  --sawdust-100:#F6F3EC;  /* Crema — fondo principal */
+  --sawdust-50:#FBFAF6;   /* Crema, variante más clara */
+  --paper-0:#FFFFFF;      /* tarjetas */
+  --blueprint-600:#1F4D4D; /* Verde Institucional — acción primaria */
+  --blueprint-700:#173D3D; /* Verde Institucional, hover */
+  --blueprint-100:#E4ECEA; /* Verde Institucional, tinte muy claro */
+  --brass-500:#A7B897;    /* Verde Salvia — acción secundaria */
+  --brass-100:#EEF1E8;    /* Verde Salvia, tinte muy claro */
+  --forest-600:#1F4D4D;   /* Verde Institucional — estados positivos */
+  --forest-100:#E4ECEA;
+  --rust-600:#9C5B45;     /* Terracota apagada — alertas (no está en la paleta oficial; ver nota de diseño) */
+  --rust-100:#F3E4DC;
+  --ink-900:#20302D;      /* texto principal, verde-negro cálido */
+  --ink-600:#7B7062;      /* Gris Topo — texto secundario oficial */
+  --line:#E3DACB;         /* línea divisoria, entre Beige Cálido y Arena */
+  --arena:#E9E1D6;        /* Arena — fondos alternos */
+  --beige:#DCCDBA;        /* Beige Cálido — fondos suaves */
+  --radius:10px;
+  --shadow:0 1px 2px rgba(31,77,77,.07), 0 4px 14px rgba(31,77,77,.07);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family:'Jost',system-ui,sans-serif;
+  font-weight:400;
+  background:var(--sawdust-100);
+  color:var(--ink-900);
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:'JetBrains Mono',monospace;}
+.disp{font-family:'Jost',sans-serif;}
+
+#shell{display:flex; min-height:100vh;}
+
+/* ---------- SIDEBAR ---------- */
+#sidebar{
+  width:230px; flex-shrink:0;
+  background:linear-gradient(180deg,var(--walnut-900),var(--walnut-800));
+  color:var(--sawdust-50);
+  padding:22px 14px;
+  display:flex; flex-direction:column; gap:4px;
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.brand{
+  display:flex; align-items:center; gap:10px;
+  padding:0 8px 20px 8px; margin-bottom:8px;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+.brand-mark{
+  width:34px;height:34px;border-radius:8px;
+  background:var(--sawdust-100);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.brand-name{font-family:'Jost',sans-serif; font-weight:600; font-size:15px; line-height:1.15; letter-spacing:.08em; text-transform:uppercase;}
+.brand-sub{font-size:10.5px; color:rgba(255,255,255,.55); letter-spacing:.04em; text-transform:uppercase;}
+.nav-item{
+  display:flex; align-items:center; gap:10px;
+  padding:9px 10px; border-radius:8px; cursor:pointer;
+  font-size:13.5px; font-weight:500; color:rgba(255,255,255,.75);
+  transition:background .12s, color .12s;
+  user-select:none;
+}
+.nav-item:hover{background:rgba(255,255,255,.06); color:#fff;}
+.nav-item.active{background:var(--brass-500); color:var(--walnut-900); font-weight:600;}
+.nav-icon{width:18px; text-align:center; font-size:14px;}
+.nav-sep{height:1px; background:rgba(255,255,255,.08); margin:10px 4px;}
+.nav-foot{margin-top:auto; padding:10px 8px 0 8px; font-size:10.5px; color:rgba(255,255,255,.4); border-top:1px solid rgba(255,255,255,.08);}
+
+/* ---------- MAIN ---------- */
+#main{flex:1; min-width:0; padding:26px 32px 60px 32px;}
+.page-head{display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:20px; gap:16px; flex-wrap:wrap;}
+.page-title{font-family:'Jost',sans-serif; font-size:24px; font-weight:600; letter-spacing:.02em; margin:0;}
+.page-sub{color:var(--ink-600); font-size:13px; margin-top:3px;}
+
+.btn{
+  border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:600;
+  cursor:pointer; font-family:'Jost',sans-serif; display:inline-flex; align-items:center; gap:7px;
+  transition:transform .06s, box-shadow .12s; white-space:nowrap;
+}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--blueprint-600); color:#fff;}
+.btn-primary:hover{background:var(--blueprint-700);}
+.btn-brass{background:var(--brass-500); color:var(--walnut-900);}
+.btn-brass:hover{filter:brightness(1.05);}
+.btn-ghost{background:var(--paper-0); color:var(--ink-900); border:1px solid var(--line);}
+.btn-ghost:hover{background:var(--sawdust-50);}
+.btn-danger{background:var(--rust-100); color:var(--rust-600);}
+.btn-danger:hover{background:#eccbc2;}
+.btn-sm{padding:6px 11px; font-size:12px;}
+.btn-icon{width:30px;height:30px;padding:0;justify-content:center;}
+
+.card{background:var(--paper-0); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);}
+.pad{padding:18px 20px;}
+
+/* KPI */
+.kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:24px;}
+.kpi{padding:16px 18px; position:relative; overflow:hidden;}
+.kpi-label{font-size:11.5px; color:var(--ink-600); text-transform:uppercase; letter-spacing:.05em; font-weight:600;}
+.kpi-value{font-family:'Jost',sans-serif; font-size:26px; font-weight:700; margin-top:6px;}
+.kpi-accent{position:absolute; left:0; top:0; bottom:0; width:4px;}
+
+/* Tables */
+table{width:100%; border-collapse:collapse; font-size:13.5px;}
+th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-600); font-weight:600; padding:9px 10px; border-bottom:2px solid var(--line);}
+td{padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr.row-hover:hover{background:var(--sawdust-50);}
+.table-wrap{overflow-x:auto;}
+
+input[type=text], input[type=number], input[type=date], input[type=tel], input[type=email], select, textarea{
+  font-family:'Jost',sans-serif; font-size:13.5px; padding:8px 10px; border:1px solid var(--line);
+  border-radius:7px; background:#fff; color:var(--ink-900); width:100%;
+}
+textarea{font-family:'Jost',sans-serif; resize:vertical;}
+input:focus, select:focus, textarea:focus{outline:2px solid var(--blueprint-600); outline-offset:1px; border-color:var(--blueprint-600);}
+.field{display:flex; flex-direction:column; gap:5px; margin-bottom:12px;}
+.field label{font-size:11.5px; font-weight:600; color:var(--ink-600); text-transform:uppercase; letter-spacing:.03em;}
+.row-flex{display:flex; gap:12px; flex-wrap:wrap;}
+.row-flex > .field{flex:1; min-width:160px;}
+
+/* tag / label - signature element (shop traveler tag) */
+.shop-tag{
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--walnut-900); color:var(--sawdust-50);
+  padding:4px 10px 4px 8px; border-radius:4px 10px 10px 4px;
+  font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:500; letter-spacing:.02em;
+}
+.shop-tag::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--brass-500); flex-shrink:0;}
+
+.badge{display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600;}
+.badge-pend{background:var(--brass-100); color:#5C6B4E;}
+.badge-prod{background:var(--blueprint-100); color:var(--blueprint-700);}
+.badge-ok{background:var(--forest-100); color:var(--forest-600);}
+.badge-cancel{background:var(--rust-100); color:var(--rust-600);}
+.badge-quote{background:var(--arena); color:var(--ink-600);}
+
+.section-title{font-family:'Jost',sans-serif; font-weight:600; font-size:15px; letter-spacing:.02em; margin:0 0 12px 0; display:flex; align-items:center; justify-content:space-between;}
+
+.mat-table input{padding:6px 8px; font-size:13px;}
+.mat-table td{padding:5px 6px;}
+.mat-table th{padding:6px;}
+.mat-total-cell{font-family:'JetBrains Mono',monospace; font-weight:600; white-space:nowrap;}
+
+.summary-box{background:var(--blueprint-100); border-radius:var(--radius); padding:16px 18px;}
+.summary-row{display:flex; justify-content:space-between; padding:5px 0; font-size:13.5px;}
+.summary-row.total{border-top:1.5px dashed var(--blueprint-700); margin-top:6px; padding-top:10px; font-weight:700; font-size:16px; font-family:'Jost',sans-serif;}
+.summary-row .val{font-family:'JetBrains Mono',monospace;}
+
+.pill-toggle{display:flex; background:var(--sawdust-50); border-radius:8px; padding:3px; border:1px solid var(--line); width:fit-content;}
+.pill-toggle .opt{padding:6px 14px; font-size:12.5px; font-weight:600; border-radius:6px; cursor:pointer; color:var(--ink-600);}
+.pill-toggle .opt.active{background:var(--blueprint-600); color:#fff;}
+
+.empty-state{text-align:center; padding:50px 20px; color:var(--ink-600);}
+.empty-state .em-icon{font-size:34px; margin-bottom:10px;}
+
+.searchbox{position:relative;}
+.searchbox input{padding-left:32px;}
+.searchbox::before{content:'🔍'; position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:12px; opacity:.5;}
+
+.autocomplete-list{position:absolute; z-index:20; background:#fff; border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow); width:100%; max-height:220px; overflow-y:auto; margin-top:4px;}
+.ac-item{padding:9px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid var(--sawdust-100);}
+.ac-item:hover{background:var(--sawdust-50);}
+.ac-item .ac-sub{font-size:11px; color:var(--ink-600);}
+.ac-new{color:var(--blueprint-600); font-weight:600;}
+
+.chosen-chip{display:flex; align-items:center; justify-content:space-between; background:var(--forest-100); padding:9px 12px; border-radius:8px; font-size:13.5px;}
+.chosen-chip .x{cursor:pointer; color:var(--rust-600); font-weight:700; padding:0 4px;}
+
+.grid-2col{display:grid; grid-template-columns:1.4fr 1fr; gap:20px;}
+@media (max-width:980px){.grid-2col{grid-template-columns:1fr;}}
+
+.model-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px;}
+.model-card{cursor:pointer; overflow:hidden;}
+.model-card img, .model-card .noimg{width:100%; height:110px; object-fit:cover; background:var(--sawdust-100); display:flex; align-items:center; justify-content:center; color:var(--ink-600); font-size:26px;}
+.model-card .mc-body{padding:10px 12px;}
+.model-card .mc-code{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink-600);}
+.model-card .mc-name{font-weight:600; font-size:13.5px; margin-top:2px;}
+
+.modal-bg{position:fixed; inset:0; background:rgba(36,24,17,.45); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px;}
+.modal{background:#fff; border-radius:14px; max-width:560px; width:100%; max-height:88vh; overflow-y:auto; padding:24px;}
+.modal.modal-wide{max-width:880px;}
+.modal h3{font-family:'Jost',sans-serif; margin-top:0;}
+.modal-close-row{display:flex; justify-content:flex-end; gap:10px; margin-top:18px;}
+
+.wa-box{background:var(--forest-100); border-radius:var(--radius); padding:16px;}
+.wa-box textarea{min-height:170px; background:#fff;}
+
+.tab-strip{display:flex; gap:4px; border-bottom:2px solid var(--line); margin-bottom:18px;}
+.tab-strip .tb{padding:9px 16px; font-size:13px; font-weight:600; cursor:pointer; color:var(--ink-600); border-bottom:2px solid transparent; margin-bottom:-2px;}
+.tab-strip .tb.active{color:var(--blueprint-700); border-color:var(--blueprint-600);}
+
+.icon-btn-row{display:flex; gap:6px;}
+.small-muted{font-size:11.5px; color:var(--ink-600);}
+.divider{height:1px; background:var(--line); margin:16px 0;}
+.link-btn{background:none;border:none;color:var(--blueprint-600); font-weight:600; cursor:pointer; font-size:13px; padding:0;}
+.link-btn:hover{text-decoration:underline;}
+::placeholder{color:#b6a892;}
+
+@media print{
+  #sidebar, .page-head .btn, .btn, .icon-btn-row, #wa-container, .modal-bg, #toast-box, #save-banner, .nav-item, .nav-sep, .nav-foot { display:none !important; }
+  #shell { display:block !important; }
+  #main { padding:0 !important; }
+  body { background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .doc { width:100% !important; max-width:100% !important; padding:10px 14px !important; font-size:11px !important; }
+  .doc-head { padding-bottom:8px !important; margin-bottom:10px !important; }
+  .doc-brand { font-size:16px !important; }
+  .doc-section-title { padding:3px 8px !important; margin:8px 0 5px 0 !important; font-size:10px !important; }
+  .doc-block { font-size:10.5px !important; }
+  .doc table.doc-items th, .doc table.doc-items td { padding:4px 6px !important; font-size:10px !important; }
+  .doc .doc-totals { font-size:11px !important; }
+  .doc .doc-legal { font-size:8.5px !important; }
+  .doc .doc-sign { margin-top:18px !important; }
+  .doc .doc-foot { margin-top:10px !important; padding-top:6px !important; font-size:9px !important; }
+  .card, .pad { box-shadow:none !important; border:none !important; }
+  @page { size:letter portrait; margin:12mm 14mm; }
+}
+</style>
+</head>
+<body>
+<div id="shell">
+  <div id="sidebar"></div>
+  <div id="main"></div>
+</div>
+
+<script>
+/* =========================================================================
+   STATE + PERSISTENCE
+   ========================================================================= */
+let DB = {
+  clients: [], models: [], quotes: [], productionOrders: [],
+  counters: { quote: 0, op: 0, cc: 0 },
+  config: { moneda: 'COP', co2Factor: 0.00008, wearFactor: 0.05 },
+  fixedCosts: null,
+  empresa: null,
+  materialTemplates: [],
+};
+function defaultEmpresa(){
+  return {
+    razonSocial: 'JUMANAR',
+    tagline: 'Taller de Diseño y Fabricación de Mobiliario',
+    fraseMarca: '"Si es parte de tu hogar, merece un lugar."',
+    representantes: 'Rosa Milena Narváez Ortiz · Byron Javier Narváez Ortiz',
+    nit: '',
+    direccion: 'Bogotá, D.C., Colombia',
+    ciudad: 'Bogotá, D.C.',
+    telefono: '310 769 5567',
+    correoWeb: 'contacto@jumanar.cc · www.jumanar.cc',
+    validezDiasCotizacion: 15,
+    anticipoPorcentaje: 0.5,
+    formaPagoTexto: '50% anticipo · 50% contra entrega',
+    medioPagoTexto: 'Transferencia / Consignación bancaria',
+    personalizacionTexto: 'Dimensiones, tapizado y madera a elección del cliente',
+    garantiaTexto: '1 año contra defectos de fabricación en estructuras, ensambles y acabados',
+    modeloProductivoTexto: 'Made-to-Order — fabricación exclusiva bajo pedido, sin inventario en stock',
+    banco: '',
+    tipoCuenta: 'Ahorros',
+    numeroCuenta: '',
+    titularCuenta: '',
+    medioPagoCCTexto: 'Transferencia / Consignación / WhatsApp Business',
+    prefijoCot: 'COT',
+    prefijoCC: 'CC',
+    prefijoOP: 'OP',
+    numeroCotInicial: 1,
+  };
+}
+function defaultFixedCosts(){
+  const wk = 4;
+  function fila(concepto, valores, tipoContrato){
+    const arr = Array.isArray(valores) ? valores.slice(0,wk) : Array(wk).fill(valores);
+    while(arr.length < wk) arr.push(arr.length ? arr[arr.length-1] : 0);
+    return {id:uid(), concepto, tipoContrato: tipoContrato||'gasto', valoresSemanales: arr};
+  }
+  return {
+    weeksPerMonth: wk,
+    partners: 2,
+    rows: [
+      fila('ARRIENDO', 550000),
+      fila('JAIRO', 500000),
+      fila('JORGE', 650000),
+      fila('CARLOS', 600000),
+      fila('CONTADOR', 150000),
+      fila('AGUA', 52500),
+      fila('LUZ', 140000),
+      fila('PROGRAMA SANA', 12750),
+      fila('SEGURIDAD SOCIAL (35% de 810.000)', 70750),
+      fila('DOTACIÓN', 10000),
+      fila('LUIS', [0,0,0,0], 'individual'),
+      fila('SEG. SOCIAL LUIS', 67500),
+    ]
+  };
+}
+let VIEW = { name: 'dashboard', params: {} };
+let DRAFT = null; // in-progress quote being edited in Cotizador
+let PENDING_DRAFT = null; // a freshly-built draft waiting to be picked up by viewCotizador
+let saveTimer = null;
+const DOMAIN_KEYS = ['clients','models','quotes','productionOrders','counters','config','fixedCosts','empresa','materialTemplates'];
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+/* =========================================================================
+   STORAGE ADAPTER — localStorage (Netlify / GitHub Pages)
+   Reemplaza window.storage de Claude con una interfaz idéntica sobre
+   localStorage del navegador. Sin dependencias externas.
+   ========================================================================= */
+const storage = (function(){
+  function safeGet(key){
+    try{ return localStorage.getItem('jum_'+key); }catch(e){ return null; }
+  }
+  function safeSet(key, value){
+    try{
+      localStorage.setItem('jum_'+key, value);
+      return true;
+    }catch(e){
+      // QuotaExceededError — intentar liberar espacio de claves viejas
+      console.warn('localStorage lleno para '+key, e);
+      return false;
+    }
+  }
+  function safeDel(key){
+    try{ localStorage.removeItem('jum_'+key); return true; }catch(e){ return false; }
+  }
+  return {
+    get: async (key) => {
+      const value = safeGet(key);
+      if(value===null) throw new Error('not_found');
+      return {key, value};
+    },
+    set: async (key, value) => {
+      const ok = safeSet(key, value);
+      if(!ok) throw new Error('Storage set failed: localStorage quota exceeded');
+      return {key, value};
+    },
+    delete: async (key) => {
+      safeDel(key);
+      return {key, deleted:true};
+    },
+    list: async (prefix='') => {
+      const keys = Object.keys(localStorage)
+        .filter(k=>k.startsWith('jum_'+(prefix||'')))
+        .map(k=>k.replace('jum_',''));
+      return {keys};
+    }
+  };
+})();
+
+async function loadDB(){
+  let migratedFromLegacy = false;
+  try{
+    const legacy = await storage.get('db');
+    if(legacy && legacy.value){
+      const parsed = JSON.parse(legacy.value);
+      DB = Object.assign(DB, parsed);
+      migratedFromLegacy = true;
+    }
+  }catch(e){ /* no legacy blob */ }
+
+  if(!migratedFromLegacy){
+    for(const k of DOMAIN_KEYS){
+      try{
+        const res = await storage.get(k);
+        if(res && res.value) DB[k] = JSON.parse(res.value);
+      }catch(e){ /* key not created yet */ }
+    }
+  }
+
+  if(!DB.fixedCosts || !DB.fixedCosts.rows){ DB.fixedCosts = defaultFixedCosts(); persist(); }
+  if(!DB.empresa){ DB.empresa = defaultEmpresa(); persist(); }
+  if(!DB.materialTemplates){ DB.materialTemplates = []; persist(); }
+  migrateProductionStates();
+  migrateCostosAdicionalesToMateriales();
+  migrateFixedCostsToWeekly();
+  migrateEmpresaFixes();
+  migrateQuotesToProductos();
+
+  if(migratedFromLegacy){
+    await persistAllNow();
+    try{ await storage.delete('db'); }catch(e){ /* best effort */ }
+  }
+  render();
+}
+function migrateProductionStates(){
+  (DB.productionOrders||[]).forEach(o=>{
+    if(OP_STATE_MIGRATION[o.estado]){ o.estado = OP_STATE_MIGRATION[o.estado]; }
+  });
+}
+function migrateCostosAdicionalesToMateriales(){
+  let changed = false;
+  (DB.quotes||[]).forEach(q=>{
+    if(Array.isArray(q.costosAdicionales) && q.costosAdicionales.length>0){
+      q.materiales = q.materiales || [];
+      q.costosAdicionales.forEach(c=>{
+        const valor = Number(c.valor)||0;
+        if((c.concepto && c.concepto.trim()!=='') || valor!==0){
+          q.materiales.push({id: uid(), material: c.concepto||'', cantidad:1, unidad:'', costoUnitario: valor});
+        }
+      });
+      q.costosAdicionales = [];
+      changed = true;
+    }
+  });
+  if(changed) persist();
+}
+function ensureRowWeeks(row, wk){
+  if(!Array.isArray(row.valoresSemanales)) row.valoresSemanales = [];
+  const arr = row.valoresSemanales;
+  while(arr.length < wk){ arr.push(arr.length ? arr[arr.length-1] : 0); }
+  if(arr.length > wk) arr.length = wk;
+  return arr;
+}
+function migrateFixedCostsToWeekly(){
+  const fc = DB.fixedCosts;
+  if(!fc || !Array.isArray(fc.rows)) return;
+  const wk = Number(fc.weeksPerMonth)||4;
+  let changed = false;
+  fc.rows.forEach(r=>{
+    if(!Array.isArray(r.valoresSemanales)){
+      const avg = ((Number(r.alto)||0)+(Number(r.medio)||0)+(Number(r.bajo)||0))/3;
+      const weekly = r.semanal ? avg : (avg/wk);
+      r.valoresSemanales = Array(wk).fill(Math.round(weekly));
+      delete r.alto; delete r.medio; delete r.bajo; delete r.semanal;
+      changed = true;
+    } else {
+      ensureRowWeeks(r, wk);
+    }
+    // Migración del antiguo campo "persona" (texto libre) al nuevo "tipoContrato" (Individual/Gasto)
+    if(r.tipoContrato===undefined){
+      r.tipoContrato = (r.persona && r.persona.trim()!=='') ? 'individual' : 'gasto';
+      changed = true;
+    }
+    if(r.persona!==undefined){ delete r.persona; changed = true; }
+  });
+  if(changed) persist();
+}
+function contratistaWeeklyTotal(nombre, weekNum){
+  const n = (nombre||'').trim().toLowerCase();
+  if(!n) return 0;
+  let total = 0;
+  DB.quotes.forEach(q=>{
+    (q.productos||[]).forEach(p=>{
+      if((p.contratista||'').trim().toLowerCase()===n && Number(p.contratistaSemana)===weekNum){
+        total += Number(p.contratistaValor)||0;
+      }
+    });
+  });
+  return total;
+}
+function rowWeeklyValue(r, weekIndex, wk){
+  if(r.tipoContrato==='individual'){
+    return contratistaWeeklyTotal(r.concepto, weekIndex+1);
+  }
+  ensureRowWeeks(r, wk);
+  return Number(r.valoresSemanales[weekIndex])||0;
+}
+function getContratistaNombres(){
+  const fc = DB.fixedCosts;
+  const set = [];
+  (fc.rows||[]).forEach(r=>{
+    if(r.tipoContrato==='individual' && r.concepto && r.concepto.trim()!=='' && !set.includes(r.concepto)) set.push(r.concepto);
+  });
+  return set;
+}
+function migrateEmpresaFixes(){
+  if(!DB.empresa) return;
+  if(!DB.config._empresaContactFixV1){
+    DB.empresa.fraseMarca = '"Se vuelve parte de tu hogar."';
+    DB.empresa.correoWeb = 'contacto@jumanar.cc · www.jumanar.cc';
+    DB.config._empresaContactFixV1 = true;
+    persist();
+  }
+}
+function migrateQuotesToProductos(){
+  let changed = false;
+  (DB.quotes||[]).forEach(q=>{
+    if(!Array.isArray(q.productos)){
+      let precioUnitario = 0;
+      const cantOriginal = Number(q.cantidad)||1;
+      if(q.modoPrecio==='manual'){
+        precioUnitario = (Number(q.precioManual)||0) / cantOriginal;
+      } else {
+        const totalMateriales = (q.materiales||[]).reduce((s,m)=> s + (Number(m.cantidad)||0)*(Number(m.costoUnitario)||0), 0);
+        precioUnitario = totalMateriales * (Number(q.multiplicador)||1);
+      }
+      q.productos = [{
+        id: uid(),
+        nombre: q.producto || '',
+        referencia: q.codigoProducto || '',
+        medidas: q.medidas || '',
+        cantidad: cantOriginal,
+        precioUnitario: precioUnitario,
+        contratista: q.contratista || '',
+        contratistaSemana: q.contratistaSemana || 1,
+        contratistaValor: q.contratistaValor || 0,
+        estadoPagoContratista: 'pendiente',
+      }];
+      if(q.modoPrecio!=='manual') q.modoPrecio = 'productos';
+      delete q.producto; delete q.codigoProducto; delete q.cantidad; delete q.medidas;
+      delete q.contratista; delete q.contratistaSemana; delete q.contratistaValor;
+      changed = true;
+    }
+  });
+  if(changed) persist();
+}
+async function persistAllNow(){
+  for(const k of DOMAIN_KEYS){
+    await persistKeyWithRetry(k);
+  }
+}
+async function persistKeyWithRetry(k, maxRetries){
+  maxRetries = maxRetries===undefined ? 3 : maxRetries;
+  for(let attempt=0; attempt<=maxRetries; attempt++){
+    try{
+      const result = await storage.set(k, JSON.stringify(DB[k]));
+      if(result) return true;
+      throw new Error('sin confirmación');
+    }catch(e){
+      if(attempt===maxRetries){
+        console.error('Error guardando '+k, e);
+        return false;
+      }
+      const delay = 300*(attempt+1) + Math.random()*200;
+      await new Promise(res=>setTimeout(res, delay));
+    }
+  }
+  return false;
+}
+let autoRetryTimer = null;
+let autoRetryCount = 0;
+function showSaveBanner(failedKeys){
+  let b = document.getElementById('save-banner');
+  if(!b){
+    b = document.createElement('div');
+    b.id = 'save-banner';
+    b.style.cssText = 'position:fixed; bottom:0; left:0; right:0; background:var(--rust-600); color:#fff; padding:10px 16px; font-size:13px; z-index:300; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; text-align:center;';
+    document.body.appendChild(b);
+  }
+  b.innerHTML = `<span>⚠ No se pudieron guardar algunos cambios en el servidor. Tus datos siguen visibles aquí, pero no se han sincronizado todavía.</span>
+    <button class="btn btn-sm" style="background:#fff; color:var(--rust-600); border:none; border-radius:8px; padding:6px 11px; font-weight:600; cursor:pointer;" onclick="retrySaveNow()">Reintentar ahora</button>`;
+}
+function hideSaveBanner(){
+  const b = document.getElementById('save-banner');
+  if(b) b.remove();
+  autoRetryCount = 0;
+  clearTimeout(autoRetryTimer);
+}
+function retrySaveNow(){
+  clearTimeout(autoRetryTimer);
+  persist(true);
+}
+function persist(immediate){
+  clearTimeout(saveTimer);
+  const run = async ()=>{
+    const failed = [];
+    for(const k of DOMAIN_KEYS){
+      const ok = await persistKeyWithRetry(k);
+      if(!ok) failed.push(k);
+    }
+    if(failed.length>0){
+      showSaveBanner(failed);
+      autoRetryCount++;
+      if(autoRetryCount <= 6){
+        autoRetryTimer = setTimeout(()=>persist(true), 6000 + Math.random()*3000);
+      }
+    } else {
+      hideSaveBanner();
+    }
+  };
+  if(immediate){ run(); }
+  else { saveTimer = setTimeout(run, 250); }
+}
+
+/* =========================================================================
+   HELPERS
+   ========================================================================= */
+function esc(s){ return (s===undefined||s===null) ? '' : String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtMoney(n){
+  n = Number(n)||0;
+  try{ return new Intl.NumberFormat('es-CO', {style:'currency', currency: DB.config.moneda, maximumFractionDigits:0}).format(n); }
+  catch(e){ return DB.config.moneda + ' ' + n.toFixed(0); }
+}
+function fmtDate(d){ if(!d) return '—'; const dt = new Date(d+'T00:00:00'); if(isNaN(dt)) return d; return dt.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
+
+function getClient(id){ return DB.clients.find(c=>c.id===id); }
+function getModel(id){ return DB.models.find(m=>m.id===id); }
+function getQuote(id){ return DB.quotes.find(q=>q.id===id); }
+function getOP(id){ return DB.productionOrders.find(o=>o.id===id); }
+function blankProductoItem(){
+  return {id:uid(), nombre:'', referencia:'', medidas:'', cantidad:1, precioUnitario:0, contratista:'', contratistaSemana:1, contratistaValor:0, estadoPagoContratista:'pendiente'};
+}
+function quoteProductSummary(q){
+  const items = (q.productos||[]).filter(p=> (p.nombre||'').trim()!=='');
+  if(items.length===0) return '(sin productos)';
+  if(items.length===1) return items[0].nombre;
+  return items.map(p=>p.nombre).join(' + ');
+}
+
+function calcQuote(q){
+  const items = (q.productos && q.productos.length>0) ? q.productos : [];
+  const cantidad = items.reduce((s,p)=> s + (Number(p.cantidad)||0), 0) || 1;
+  const totalMateriales = (q.materiales||[]).reduce((s,m)=> s + (Number(m.cantidad)||0)*(Number(m.costoUnitario)||0), 0);
+  const costoUnitario = totalMateriales;
+  const manoObra = (q.materiales||[]).find(m=> (m.material||'').toLowerCase().includes('mano de obra'));
+  const manoObraValor = manoObra ? (Number(manoObra.cantidad)||0)*(Number(manoObra.costoUnitario)||0) : 0;
+
+  const totalProductos = items.reduce((s,p)=> s + (Number(p.cantidad)||0)*(Number(p.precioUnitario)||0), 0);
+
+  let precioVentaPedido;
+  if(q.modoPrecio === 'manual'){
+    precioVentaPedido = Number(q.precioManual)||0;
+  } else if(q.modoPrecio === 'productos'){
+    precioVentaPedido = totalProductos;
+  } else {
+    precioVentaPedido = costoUnitario * (Number(q.multiplicador)||1);
+  }
+  const precioVentaUnitario = cantidad>0 ? precioVentaPedido/cantidad : precioVentaPedido;
+
+  const costoTotalPedido = costoUnitario;
+  const co2 = costoTotalPedido * (DB.config.co2Factor||0);
+  const desgaste = manoObraValor * (DB.config.wearFactor||0);
+  const utilidadPedido = precioVentaPedido - costoTotalPedido;
+  const margen = precioVentaPedido>0 ? (utilidadPedido/precioVentaPedido*100) : 0;
+  const abonoSugerido = precioVentaPedido * 0.5;
+
+  return {
+    cantidad,
+    totalMateriales, totalProductos,
+    costoUnitario, precioVentaUnitario,
+    co2, desgaste,
+    costoTotal: costoTotalPedido,
+    precioVenta: precioVentaPedido,
+    utilidad: utilidadPedido,
+    margen,
+    abonoSugerido,
+    items
+  };
+}
+
+function saldoPendiente(q){
+  if(q.estado !== 'vendida' || !q.venta) return 0;
+  const calc = calcQuote(q);
+  return Math.max(0, calc.precioVenta - (Number(q.venta.anticipo)||0));
+}
+
+function nextQuoteNumber(){
+  DB.counters.quote++;
+  const p = (DB.empresa&&DB.empresa.prefijoCot)||'COT';
+  return p+'-'+String(DB.counters.quote).padStart(6,'0');
+}
+function nextOPNumber(){
+  DB.counters.op++;
+  const p = (DB.empresa&&DB.empresa.prefijoOP)||'OP';
+  return p+'-'+String(DB.counters.op).padStart(6,'0');
+}
+function nextCCNumber(){
+  DB.counters.cc = (DB.counters.cc||0)+1;
+  const p = (DB.empresa&&DB.empresa.prefijoCC)||'CC';
+  return p+'-'+String(DB.counters.cc).padStart(6,'0');
+}
+function docDisplayNumber(prefix, numero){
+  return 'JUM-'+(numero||(prefix+'-000000'));
+}
+
+const OP_STATES = ['pendiente','en_produccion','listo_entrega','entregado'];
+const OP_LABELS = {pendiente:'Pendiente', en_produccion:'En producción', listo_entrega:'Listo para entrega', entregado:'Entregado'};
+const OP_STATE_MIGRATION = { en_fabricacion:'en_produccion', en_pintura:'en_produccion', en_tapiceria:'en_produccion', cancelado:'pendiente' };
+function opBadgeClass(st){
+  if(st==='entregado') return 'badge-ok';
+  if(st==='pendiente') return 'badge-pend';
+  return 'badge-prod';
+}
+
+/* =========================================================================
+   DOCUMENTOS PDF — Cotización y Cuenta de Cobro (formato oficial JUMANAR)
+   ========================================================================= */
+function numeroALetras(num){
+  num = Math.round(Number(num)||0);
+  if(num===0) return 'CERO PESOS M/CTE';
+  const UNI=['', 'un','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez',
+    'once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve','veinte'];
+  const DEC=['veinte','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
+  const CEN=['ciento','doscientos','trescientos','cuatrocientos','quinientos','seiscientos','setecientos','ochocientos','novecientos'];
+  function grupo(n){
+    if(n===100) return 'cien';
+    const c = Math.floor(n/100), r = n%100;
+    let out = c>0 ? CEN[c-1] : '';
+    if(r>0){
+      if(out) out += ' ';
+      if(r<=20) out += UNI[r];
+      else{
+        const d=Math.floor(r/10), u=r%10;
+        if(u===0) out += DEC[d-2];
+        else if(d===2) out += 'veinti'+UNI[u];
+        else out += DEC[d-2]+' y '+UNI[u];
+      }
+    }
+    return out.trim();
+  }
+  const millones = Math.floor(num/1000000);
+  const miles = Math.floor((num%1000000)/1000);
+  const cientos = num%1000;
+  let partes = [];
+  if(millones>0) partes.push(millones===1 ? 'un millón' : grupo(millones)+' millones');
+  if(miles>0) partes.push(miles===1 ? 'mil' : grupo(miles)+' mil');
+  if(cientos>0) partes.push(grupo(cientos));
+  let texto = partes.join(' ').trim();
+  texto = texto.charAt(0).toUpperCase()+texto.slice(1);
+  return (texto+' PESOS M/CTE').toUpperCase();
+}
+function addDays(dateStr, days){
+  const d = new Date((dateStr||todayStr())+'T00:00:00');
+  d.setDate(d.getDate()+(Number(days)||0));
+  return d.toISOString().slice(0,10);
+}
+function docDisplayNumber(prefix, numero){
+  // "COT-000002" -> "JUM-COT-000002"; falls back gracefully if numero is missing
+  return 'JUM-' + (numero || (prefix+'-000000'));
+}
+function docStyles(){
+  return `
+    <style>
+      .doc{font-family:'Jost',sans-serif; color:var(--ink-900); width:760px; padding:36px 40px; background:#fff; font-size:12.5px; line-height:1.5;}
+      .doc h1,.doc h2{font-family:'Jost',sans-serif;}
+      .doc .doc-head{display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid var(--walnut-900); padding-bottom:14px; margin-bottom:16px;}
+      .doc .doc-brand{font-weight:700; font-size:20px; letter-spacing:.08em; color:var(--walnut-900); text-transform:uppercase;}
+      .doc .doc-tagline{font-size:11px; color:var(--ink-600); margin-top:2px;}
+      .doc .doc-type{font-weight:700; font-size:15px; letter-spacing:.06em; color:var(--walnut-900); text-align:right; text-transform:uppercase;}
+      .doc .doc-phrase{font-size:10.5px; font-style:italic; color:var(--ink-600); text-align:right; margin-top:2px;}
+      .doc .doc-meta{display:flex; gap:24px; margin-bottom:16px; font-size:12px;}
+      .doc .doc-meta div{flex:1;}
+      .doc .doc-meta b{display:block; color:var(--ink-600); font-size:10px; text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; font-weight:600;}
+      .doc .doc-section-title{background:var(--walnut-900); color:#fff; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; padding:5px 10px; margin:14px 0 8px 0; border-radius:3px;}
+      .doc .doc-block{display:grid; grid-template-columns:170px 1fr; gap:4px 10px; font-size:12px; margin-bottom:2px;}
+      .doc .doc-block b{color:var(--ink-600); font-weight:600;}
+      .doc table.doc-items{width:100%; border-collapse:collapse; margin-top:4px; font-size:11.5px;}
+      .doc table.doc-items th{background:var(--brass-100); color:var(--walnut-900); text-align:left; padding:6px 8px; font-size:10px; text-transform:uppercase; letter-spacing:.03em; border-bottom:1.5px solid var(--walnut-900);}
+      .doc table.doc-items td{padding:6px 8px; border-bottom:1px solid var(--line);}
+      .doc table.doc-items td.num{text-align:right; font-family:'JetBrains Mono',monospace;}
+      .doc .doc-totals{width:320px; margin-left:auto; margin-top:6px; font-size:12px;}
+      .doc .doc-totals div{display:flex; justify-content:space-between; padding:3px 0;}
+      .doc .doc-totals .final{font-weight:700; font-size:14px; border-top:1.5px solid var(--walnut-900); margin-top:4px; padding-top:6px;}
+      .doc .doc-letras{margin-top:10px; font-size:11.5px; font-style:italic; color:var(--ink-600);}
+      .doc .doc-legal{font-size:9.5px; color:var(--ink-600); line-height:1.5; margin-top:6px; text-align:justify;}
+      .doc .doc-sign{display:flex; justify-content:space-between; margin-top:36px; font-size:11px;}
+      .doc .doc-sign div{width:44%; border-top:1px solid var(--ink-900); padding-top:6px; text-align:center; color:var(--ink-600);}
+      .doc .doc-foot{margin-top:22px; text-align:center; font-size:10px; color:var(--ink-600); border-top:1px solid var(--line); padding-top:10px;}
+    </style>`;
+}
+function buildCotizacionDocHTML(q){
+  const e = DB.empresa || defaultEmpresa();
+  const c = getClient(q.clienteId) || {};
+  const calc = calcQuote(q);
+  const total = calc.precioVenta;
+  const anticipoPct = Number(e.anticipoPorcentaje)||0.5;
+  const anticipoValor = total * anticipoPct;
+  const saldoEntrega = total - anticipoValor;
+  const validaHasta = addDays(q.fecha, e.validezDiasCotizacion||15);
+  return `<div class="doc">
+    <div class="doc-head">
+      <div><div class="doc-brand">${esc(e.razonSocial)}</div><div class="doc-tagline">${esc(e.tagline)}</div></div>
+      <div><div class="doc-type">Cotización</div><div class="doc-phrase">${esc(e.fraseMarca)}</div></div>
+    </div>
+    <div class="doc-meta">
+      <div><b>No. Cotización</b>${esc(docDisplayNumber('COT', q.numero))}</div>
+      <div><b>Fecha de expedición</b>${fmtDate(q.fecha)}</div>
+      <div><b>Ciudad</b>${esc(e.ciudad)}</div>
+      <div><b>Válida hasta</b>${fmtDate(validaHasta)}</div>
+    </div>
+    <div class="doc-section-title">Cotizado por · ${esc(e.razonSocial)}</div>
+    <div class="doc-block"><b>Razón social:</b><span>${esc(e.razonSocial)}</span></div>
+    <div class="doc-block"><b>Representante(s):</b><span>${esc(e.representantes)}</span></div>
+    <div class="doc-block"><b>NIT / C.C.:</b><span>${esc(e.nit)||'&mdash;'}</span></div>
+    <div class="doc-block"><b>Dirección:</b><span>${esc(e.direccion)}</span></div>
+    <div class="doc-block"><b>Teléfono / WhatsApp:</b><span>${esc(e.telefono)}</span></div>
+    <div class="doc-block"><b>Correo / Web:</b><span>${esc(e.correoWeb)}</span></div>
+
+    <div class="doc-section-title">Cotizado para · Datos del cliente</div>
+    <div class="doc-block"><b>Nombre / Razón social:</b><span>${esc(c.nombre||'')}</span></div>
+    <div class="doc-block"><b>C.C. / NIT:</b><span>${esc(c.cedulaNit)||'&mdash;'}</span></div>
+    <div class="doc-block"><b>Dirección:</b><span>${esc(c.direccion)||'&mdash;'}</span></div>
+    <div class="doc-block"><b>Teléfono:</b><span>${esc(c.telefono)||'&mdash;'}</span></div>
+    <div class="doc-block"><b>Correo:</b><span>${esc(c.email)||'&mdash;'}</span></div>
+
+    <div class="doc-section-title">Detalle de la cotización</div>
+    <table class="doc-items">
+      <tr><th>Referencia</th><th>Descripción</th><th>Cant.</th><th>Valor unitario</th><th>Subtotal</th></tr>
+      ${(q.productos||[]).filter(p=>(p.nombre||'').trim()!=='').map(p=>`<tr>
+        <td>${esc(p.referencia)||'&mdash;'}</td>
+        <td>${esc(p.nombre)}${p.medidas?' — '+esc(p.medidas):''}</td>
+        <td class="num">${Number(p.cantidad)||0}</td>
+        <td class="num">${fmtMoney(p.precioUnitario)}</td>
+        <td class="num">${fmtMoney((Number(p.cantidad)||0)*(Number(p.precioUnitario)||0))}</td>
+      </tr>`).join('')}
+    </table>
+    <div class="doc-totals">
+      <div><span>Subtotal</span><span>${fmtMoney(calc.precioVenta)}</span></div>
+      <div class="final"><span>Total cotizado</span><span>${fmtMoney(total)}</span></div>
+      <div><span>Anticipo requerido (${(anticipoPct*100).toFixed(0)}%)</span><span>${fmtMoney(anticipoValor)}</span></div>
+      <div><span>Saldo contra entrega</span><span>${fmtMoney(saldoEntrega)}</span></div>
+    </div>
+
+    <div class="doc-section-title">Condiciones comerciales</div>
+    <div class="doc-block"><b>Tiempo estimado de fabricación:</b><span>${esc(q.tiempoFabricacion)||'A confirmar'}</span></div>
+    <div class="doc-block"><b>Forma de pago:</b><span>${esc(q.condicionesPago)}</span></div>
+    <div class="doc-block"><b>Medio de pago:</b><span>${esc(e.medioPagoTexto)}</span></div>
+    <div class="doc-block"><b>Personalización incluida:</b><span>${esc(e.personalizacionTexto)}</span></div>
+    <div class="doc-block"><b>Garantía:</b><span>${esc(e.garantiaTexto)}</span></div>
+    <div class="doc-block"><b>Modelo productivo:</b><span>${esc(e.modeloProductivoTexto)}</span></div>
+
+    <div class="doc-section-title">Constancia</div>
+    <div class="doc-legal">Esta cotización tiene carácter informativo y no constituye Factura de Venta ni Cuenta de Cobro. Los precios aquí consignados están sujetos a confirmación de disponibilidad de materiales y a la vigencia indicada en el campo "Válida hasta". El inicio de fabricación queda condicionado al pago del anticipo acordado, conforme a la Política Comercial de ${esc(e.razonSocial)} (modelo Made-to-Order). Una vez aceptada esta cotización por el cliente, ${esc(e.razonSocial)} expedirá la Cuenta de Cobro o Factura de Venta correspondiente, según la normatividad tributaria vigente ante la DIAN.</div>
+
+    <div class="doc-sign"><div>Elaborado por · ${esc(e.razonSocial)}</div><div>Aceptación del cliente</div></div>
+    <div class="doc-foot">${esc(e.razonSocial)} · ${esc(e.fraseMarca)} · ${esc(e.direccion)}</div>
+  </div>`;
+}
+function buildCuentaCobroDocHTML(q){
+  const e = DB.empresa || defaultEmpresa();
+  const c = getClient(q.clienteId) || {};
+  const calc = calcQuote(q);
+  const total = calc.precioVenta;
+  const anticipoValor = q.venta ? (Number(q.venta.anticipo)||0) : 0;
+  const anticipoPctDisplay = total>0 ? (anticipoValor/total*100) : 0;
+  const saldo = Math.max(0, total - anticipoValor);
+  const fechaExp = (q.venta && q.venta.fecha) || todayStr();
+  const persisted = getQuote(q.id);
+  if(persisted && persisted.venta && !persisted.venta.numeroCC){ persisted.venta.numeroCC = nextCCNumber(); persist(); }
+  const numeroCC = (persisted && persisted.venta && persisted.venta.numeroCC) || (q.venta && q.venta.numeroCC) || '';
+  return `<div class="doc">
+    <div class="doc-head">
+      <div><div class="doc-brand">${esc(e.razonSocial)}</div><div class="doc-tagline">${esc(e.tagline)}</div></div>
+      <div><div class="doc-type">Cuenta de cobro</div><div class="doc-phrase">${esc(e.fraseMarca)}</div></div>
+    </div>
+    <div class="doc-meta">
+      <div><b>No. Cuenta de cobro</b>${esc(docDisplayNumber('CC', numeroCC))}</div>
+      <div><b>Fecha de expedición</b>${fmtDate(fechaExp)}</div>
+      <div><b>Ciudad</b>${esc(e.ciudad)}</div>
+    </div>
+    <div class="doc-section-title">Quien cobra · ${esc(e.razonSocial)}</div>
+    <div class="doc-block"><b>Razón social:</b><span>${esc(e.razonSocial)}</span></div>
+    <div class="doc-block"><b>Representante(s):</b><span>${esc(e.representantes)}</span></div>
+    <div class="doc-block"><b>NIT / C.C.:</b><span>${esc(e.nit)||'&mdash;'}</span></div>
+    <div class="doc-block"><b>Dirección:</b><span>${esc(e.direccion)}</span></div>
+    <div class="doc-block"><b>Teléfono / WhatsApp:</b><span>${esc(e.telefono)}</span></div>
+    <div class="doc-block"><b>Correo / Web:</b><span>${esc(e.correoWeb)}</span></div>
+
+    <div class="doc-section-title">Quien paga · Datos del cliente</div>
+    <div class="doc-block"><b>Nombre / Razón social:</b><span>${esc(c.nombre||'')}</span></div>
+    <div class="doc-block"><b>C.C. / NIT:</b><span>${esc(c.cedulaNit)||'&mdash;'}</span></div>
+    <div class="doc-block"><b>Dirección:</b><span>${esc(c.direccion)||'&mdash;'}</span></div>
+    <div class="doc-block"><b>Teléfono:</b><span>${esc(c.telefono)||'&mdash;'}</span></div>
+    <div class="doc-block"><b>Correo:</b><span>${esc(c.email)||'&mdash;'}</span></div>
+
+    <div class="doc-section-title">Detalle del cobro</div>
+    <table class="doc-items">
+      <tr><th>Referencia</th><th>Descripción</th><th>Cant.</th><th>Valor unitario</th><th>Subtotal</th></tr>
+      ${(q.productos||[]).filter(p=>(p.nombre||'').trim()!=='').map(p=>`<tr>
+        <td>${esc(p.referencia)||'&mdash;'}</td>
+        <td>${esc(p.nombre)}${p.medidas?' — '+esc(p.medidas):''}</td>
+        <td class="num">${Number(p.cantidad)||0}</td>
+        <td class="num">${fmtMoney(p.precioUnitario)}</td>
+        <td class="num">${fmtMoney((Number(p.cantidad)||0)*(Number(p.precioUnitario)||0))}</td>
+      </tr>`).join('')}
+    </table>
+    <div class="doc-totals">
+      <div><span>Subtotal</span><span>${fmtMoney(calc.precioVenta)}</span></div>
+      <div class="final"><span>Total a pagar</span><span>${fmtMoney(total)}</span></div>
+      <div><span>Anticipo recibido (${anticipoPctDisplay.toFixed(0)}%)</span><span>${fmtMoney(anticipoValor)}</span></div>
+      <div><span>Saldo pendiente</span><span>${fmtMoney(saldo)}</span></div>
+    </div>
+    <div class="doc-letras">Son (${numeroALetras(total)})</div>
+
+    <div class="doc-section-title">Forma de pago y datos bancarios</div>
+    <div class="doc-block"><b>Banco:</b><span>${esc(e.banco)||'&mdash;'}</span></div>
+    <div class="doc-block"><b>Tipo de cuenta:</b><span>${esc(e.tipoCuenta)}</span></div>
+    <div class="doc-block"><b>Número de cuenta:</b><span>${esc(e.numeroCuenta)||'&mdash;'}</span></div>
+    <div class="doc-block"><b>Titular de la cuenta:</b><span>${esc(e.titularCuenta)||'&mdash;'}</span></div>
+    <div class="doc-block"><b>Medio de pago:</b><span>${esc(e.medioPagoCCTexto)}</span></div>
+
+    <div class="doc-section-title">Constancia y normatividad aplicable (Colombia)</div>
+    <div class="doc-legal">El presente documento se expide como CUENTA DE COBRO, de conformidad con lo previsto en el Estatuto Tributario Nacional y la normatividad vigente de la Dirección de Impuestos y Aduanas Nacionales (DIAN). Contiene, para su validez: fecha y ciudad de expedición, identificación completa de quien cobra y de quien paga, concepto detallado del cobro, valor en números y en letras, y firma de quien lo expide (Art. 771-2 E.T. y concordantes).<br><br>
+    Este documento no constituye Factura de Venta ni Factura Electrónica de Venta para efectos tributarios. Si ${esc(e.razonSocial)} se encuentra obligado a facturar electrónicamente conforme a la Resolución DIAN 000042 de 2020 y demás normas concordantes, deberá expedirse adicionalmente la factura electrónica de venta correspondiente.<br><br>
+    Retención en la fuente: cuando el pagador tenga la calidad de agente retenedor, deberá practicar la retención que corresponda según el concepto y la tarifa vigente al momento del pago, de conformidad con el Estatuto Tributario.<br><br>
+    Este documento se expide y firma de buena fe, dejando constancia de que la información aquí consignada es veraz y corresponde a la transacción comercial realizada entre las partes.</div>
+
+    <div class="doc-sign"><div>Firma autorizada · ${esc(e.razonSocial)}<br>C.C. / NIT: ${esc(e.nit)||'____________________'}</div><div>&nbsp;</div></div>
+    <div class="doc-foot">${esc(e.razonSocial)} · ${esc(e.fraseMarca)} · ${esc(e.direccion)}</div>
+  </div>`;
+}
+function ensureDocStylesInjected(){
+  if(document.getElementById('doc-style-inject')) return;
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = docStyles();
+  const styleEl = wrapper.querySelector('style');
+  if(styleEl){ styleEl.id = 'doc-style-inject'; document.head.appendChild(styleEl); }
+}
+function docStylesForWord(){
+  // Versión de los estilos del documento SIN variables CSS (var(--...)), porque Word
+  // no las interpreta. Misma paleta e identidad de JUMANAR (verde institucional #1F4D4D,
+  // verde salvia #A7B897, beige cálido #DCCDBA, gris topo #7B7062), sin flexbox/grid
+  // (Word tampoco los soporta bien) — se reemplazan por bloques simples que Word sí respeta.
+  return `
+    <style>
+      body{font-family:'Jost',Calibri,Arial,sans-serif; color:#20302D; margin:0;}
+      .doc-topbar{height:8px; background:#1F4D4D; margin-bottom:22px;}
+      .doc-topbar-accent{height:3px; background:#A7B897;}
+      .doc{width:700px; padding:10px 0 20px 0; background:#fff; font-size:12.5px; line-height:1.5;}
+      .doc-head{border-bottom:2px solid #1F4D4D; padding-bottom:14px; margin-bottom:16px;}
+      .doc-head:after{content:''; display:block; clear:both;}
+      .doc-brand{float:left; font-weight:700; font-size:22px; letter-spacing:1.5px; color:#1F4D4D; text-transform:uppercase;}
+      .doc-tagline{float:left; clear:left; font-size:11px; color:#7B7062; margin-top:2px;}
+      .doc-type{float:right; font-weight:700; font-size:15px; letter-spacing:1px; color:#fff; text-align:right; text-transform:uppercase; background:#1F4D4D; padding:4px 12px;}
+      .doc-phrase{float:right; clear:right; font-size:10.5px; font-style:italic; color:#7B7062; text-align:right; margin-top:6px;}
+      .doc-meta{margin-bottom:16px; font-size:12px; width:100%; border-collapse:collapse; background:#DCCDBA;}
+      .doc-meta td{padding:8px 24px 8px 10px; vertical-align:top;}
+      .doc-meta b{display:block; color:#1F4D4D; font-size:10px; text-transform:uppercase; letter-spacing:.5px; margin-bottom:2px; font-weight:700;}
+      .doc-section-title{background:#1F4D4D; color:#fff; font-size:11px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; padding:6px 10px; margin:16px 0 8px 0; border-left:4px solid #A7B897;}
+      .doc-block{width:100%; font-size:12px; margin-bottom:2px; border-collapse:collapse;}
+      .doc-block td{padding:3px 0;}
+      .doc-block td.lbl{width:170px; color:#7B7062; font-weight:600;}
+      table.doc-items{width:100%; border-collapse:collapse; margin-top:4px; font-size:11.5px;}
+      table.doc-items th{background:#1F4D4D; color:#fff; text-align:left; padding:7px 8px; font-size:10px; text-transform:uppercase; letter-spacing:.5px;}
+      table.doc-items td{padding:7px 8px; border-bottom:1px solid #E3DACB;}
+      table.doc-items tr:nth-child(even) td{background:#F6F3EC;}
+      table.doc-items td.num{text-align:right;}
+      .doc-totals{width:320px; margin-left:auto; margin-top:6px; font-size:12px; border-collapse:collapse;}
+      .doc-totals td{padding:4px 6px;}
+      .doc-totals td.lbl2{text-align:left;} .doc-totals td.val2{text-align:right;}
+      .doc-totals .final td{font-weight:700; font-size:14px; border-top:1.5px solid #1F4D4D; background:#EEF1E8; padding-top:8px; padding-bottom:8px;}
+      .doc-letras{margin-top:10px; font-size:11.5px; font-style:italic; color:#7B7062;}
+      .doc-legal{font-size:9.5px; color:#7B7062; line-height:1.5; margin-top:6px; text-align:justify;}
+      .doc-sign{width:100%; margin-top:36px; font-size:11px; border-collapse:collapse;}
+      .doc-sign td{width:44%; border-top:1px solid #20302D; padding-top:6px; text-align:center; color:#7B7062;}
+      .doc-foot{margin-top:22px; text-align:center; font-size:10px; color:#7B7062; border-top:2px solid #A7B897; padding-top:10px;}
+    </style>`;
+}
+function docHtmlToWordCompatible(bodyHtml){
+  // Word entiende flexbox/grid muy mal. Convertimos los contenedores clave a <table>
+  // simples (que Word sí respeta) usando el mismo HTML que ya generamos, con un
+  // reemplazo ligero de estructura para las secciones de dos columnas.
+  let html = '<div class="doc-topbar"></div><div class="doc-topbar-accent"></div>' + bodyHtml;
+  // doc-meta: convertir los 4 <div> hijos en celdas de una fila de tabla
+  html = html.replace(/<div class="doc-meta">([\s\S]*?)<\/div>\s*<div class="doc-section-title">/,
+    (m, inner)=>{
+      const cells = [...inner.matchAll(/<div>([\s\S]*?)<\/div>/g)].map(x=>`<td>${x[1]}</td>`).join('');
+      return `<table class="doc-meta"><tr>${cells}</tr></table><div class="doc-section-title">`;
+    });
+  return html;
+}
+function downloadDocWord(bodyHtml, filename){
+  const preparedBody = docHtmlToWordCompatible(bodyHtml);
+  const fullHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head><meta charset='utf-8'><title>${esc(filename)}</title>
+  <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+  ${docStylesForWord()}
+  </head>
+  <body>${preparedBody}</body>
+  </html>`;
+  const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  toast('Word descargado.');
+}
+function downloadSmartPDF(quoteId){
+  const q = getQuote(quoteId);
+
+  if(!q){ toast('Cotización no encontrada.'); return; }
+  if(q.estado==='vendida' && q.venta){
+    openDocPreview(quoteId, 'cuentaCobro');
+  } else {
+    openDocPreview(quoteId, 'cotizacion');
+  }
+}
+function openDocPreview(quoteId, docType){
+  const q = getQuote(quoteId);
+  if(!q){ toast('Cotización no encontrada.'); return; }
+  if(docType==='cuentaCobro' && (q.estado!=='vendida' || !q.venta)){ toast('Esta cotización aún no está marcada como vendida.'); return; }
+  ensureDocStylesInjected();
+  const bodyHtml = docType==='cuentaCobro' ? buildCuentaCobroDocHTML(q) : buildCotizacionDocHTML(q);
+  const title = docType==='cuentaCobro' ? 'Cuenta de cobro' : 'Cotización';
+  const filename = docType==='cuentaCobro'
+    ? 'CuentaDeCobro_'+docDisplayNumber('CC', (q.venta&&q.venta.numeroCC)||'')+'.doc'
+    : 'Cotizacion_'+docDisplayNumber('COT', q.numero)+'.doc';
+  showModal(`
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:6px;">
+      <div><h3 style="margin:0 0 2px 0;">Vista previa · ${esc(title)}</h3>
+      <div class="small-muted">Haz clic sobre cualquier texto del documento para editarlo (agrega notas, cambia cantidades o descripciones, etc.) antes de descargar.</div></div>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="closeModal()" title="Cerrar">✕</button>
+    </div>
+    <div id="doc-preview-holder" data-filename="${esc(filename)}" contenteditable="true" style="border:1px dashed var(--line); border-radius:8px; overflow:auto; max-height:58vh; margin-top:8px;">${bodyHtml}</div>
+    <div class="modal-close-row">
+      <button class="btn btn-ghost" onclick="openDocPreview('${quoteId}','${docType}')">↺ Restablecer</button>
+      <button class="btn btn-ghost" onclick="printDocPreview()">🖨 Imprimir</button>
+      <button class="btn btn-primary" onclick="downloadEditedDocWord()">⬇ Descargar Word</button>
+    </div>
+  `, 'modal-wide');
+}
+function downloadEditedDocWord(){
+  const holder = document.getElementById('doc-preview-holder');
+  if(!holder){ toast('No se encontró el documento a descargar.'); return; }
+  const filename = holder.dataset.filename || 'Documento.doc';
+  downloadDocWord(holder.innerHTML, filename);
+}
+function printDocPreview(){
+  const holder = document.getElementById('doc-preview-holder');
+  if(!holder){ toast('No se encontró el documento.'); return; }
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Imprimir documento JUMANAR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  ${docStylesForWord()}
+  <style>
+    body{margin:0;padding:12mm 14mm;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .doc{width:100%;font-size:11px;line-height:1.5;}
+    .doc-brand{font-size:17px;}
+    .doc-section-title{padding:3px 8px;margin:8px 0 5px 0;font-size:10px;}
+    .doc-block{font-size:10.5px;}
+    table.doc-items th,table.doc-items td{padding:4px 6px;font-size:10px;}
+    .doc-legal{font-size:8.5px;}
+    .doc-sign{margin-top:20px;}
+    .doc-foot{margin-top:10px;padding-top:6px;font-size:9px;}
+    @page{size:letter portrait;margin:0;}
+    @media print{body{padding:12mm 14mm;}}
+  </style>
+  </head><body>${docHtmlToWordCompatible(holder.innerHTML)}</body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>{ win.print(); }, 600);
+}
+
+/* =========================================================================
+   NAVIGATION
+   ========================================================================= */
+function nav(name, params){ VIEW = {name, params: params||{}}; DRAFT = null; render(); window.scrollTo(0,0); }
+
+const NAV_ITEMS = [
+  {id:'dashboard', label:'Panel', icon:'◆'},
+  {id:'clientes', label:'Clientes', icon:'●'},
+  {id:'modelos', label:'Biblioteca de modelos', icon:'▦'},
+  {id:'cotizador', label:'Nueva cotización', icon:'✎'},
+  {id:'cotizaciones', label:'Cotizaciones', icon:'▤'},
+  {id:'ventas', label:'Ventas', icon:'▥'},
+  {id:'produccion', label:'Producción', icon:'⚙'},
+  {id:'agenda', label:'Agenda de entregas', icon:'▨'},
+  {id:'costosfijos', label:'Costos fijos', icon:'$'},
+  {id:'contratistas', label:'Control de contratistas', icon:'◐'},
+  {id:'historial', label:'Historial', icon:'⌕'},
+  {id:'empresa', label:'Datos de empresa', icon:'⌂'},
+  {id:'exportar', label:'Exportar datos', icon:'⇩'},
+];
+
+function renderSidebar(){
+  const groups = [
+    NAV_ITEMS.slice(0,1),
+    NAV_ITEMS.slice(1,3),
+    NAV_ITEMS.slice(3,6),
+    NAV_ITEMS.slice(6,13),
+  ];
+  let html = `<div class="brand">
+      <div class="brand-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 17 L12 6 L21 17" stroke="#1F4D4D" stroke-width="2.6" stroke-linecap="square" stroke-linejoin="miter"/></svg></div>
+      <div><div class="brand-name">Jumanar</div><div class="brand-sub">Taller · Cotizador</div></div>
+    </div>`;
+  groups.forEach((g,gi)=>{
+    g.forEach(it=>{
+      html += `<div class="nav-item ${VIEW.name===it.id?'active':''}" data-nav="${it.id}">
+        <span class="nav-icon">${it.icon}</span><span>${it.label}</span></div>`;
+    });
+    if(gi < groups.length-1) html += `<div class="nav-sep"></div>`;
+  });
+  html += `<div class="nav-foot">Datos guardados automáticamente en tu cuenta.<br><span style="font-style:italic; opacity:.8;">"Si es parte de tu hogar, merece un lugar."</span></div>`;
+  document.getElementById('sidebar').innerHTML = html;
+}
+
+/* =========================================================================
+   RENDER ROUTER
+   ========================================================================= */
+function render(){
+  renderSidebar();
+  const main = document.getElementById('main');
+  switch(VIEW.name){
+    case 'dashboard': main.innerHTML = viewDashboard(); break;
+    case 'clientes': main.innerHTML = viewClientes(); break;
+    case 'modelos': main.innerHTML = viewModelos(); break;
+    case 'cotizador': main.innerHTML = viewCotizador(); break;
+    case 'cotizaciones': main.innerHTML = viewCotizaciones(); break;
+    case 'ventas': main.innerHTML = viewVentas(); break;
+    case 'produccion': main.innerHTML = viewProduccion(); break;
+    case 'agenda': main.innerHTML = viewAgenda(); break;
+    case 'costosfijos': main.innerHTML = viewCostosFijos(); break;
+    case 'contratistas': main.innerHTML = viewContratistas(); break;
+    case 'historial': main.innerHTML = viewHistorial(); break;
+    case 'empresa': main.innerHTML = viewEmpresa(); break;
+    case 'exportar': main.innerHTML = viewExportar(); break;
+    default: main.innerHTML = '<p>Vista no encontrada</p>';
+  }
+  attachCotizadorLiveHandlers();
+  attachFixedCostsLiveHandlers();
+}
+
+/* =========================================================================
+   DASHBOARD
+   ========================================================================= */
+function viewDashboard(){
+  const now = new Date();
+  const ym = now.toISOString().slice(0,7);
+  const cotizacionesMes = DB.quotes.filter(q=>q.fecha && q.fecha.startsWith(ym)).length;
+  const ventasMes = DB.quotes.filter(q=>q.estado==='vendida' && q.venta && q.venta.fecha && q.venta.fecha.startsWith(ym));
+  const totalVentasMes = ventasMes.reduce((s,q)=> s+calcQuote(q).precioVenta, 0);
+  const enProduccion = DB.productionOrders.filter(o=> !['entregado'].includes(o.estado)).length;
+  const pendientes = DB.productionOrders.filter(o=> o.estado==='pendiente').length;
+  const in7 = DB.productionOrders.filter(o=>{
+    if(['entregado'].includes(o.estado) || !o.fechaEntregaEstimada) return false;
+    const d = daysBetween(todayStr(), o.fechaEntregaEstimada);
+    return d>=0 && d<=7;
+  }).length;
+  const saldoTotal = DB.quotes.reduce((s,q)=> s+saldoPendiente(q), 0);
+  const totalVendidoHist = DB.quotes.filter(q=>q.estado==='vendida').reduce((s,q)=>s+calcQuote(q).precioVenta,0);
+
+  const kpis = [
+    {label:'Cotizaciones del mes', value: cotizacionesMes, accent:'var(--blueprint-600)'},
+    {label:'Ventas del mes', value: fmtMoney(totalVentasMes), accent:'var(--forest-600)'},
+    {label:'Pedidos en producción', value: enProduccion, accent:'var(--brass-500)'},
+    {label:'Pedidos pendientes', value: pendientes, accent:'var(--rust-600)'},
+    {label:'Entregas próximas (7 días)', value: in7, accent:'var(--blueprint-600)'},
+    {label:'Saldo pendiente por cobrar', value: fmtMoney(saldoTotal), accent:'var(--rust-600)'},
+    {label:'Total vendido (histórico)', value: fmtMoney(totalVendidoHist), accent:'var(--forest-600)'},
+  ];
+
+  const recientes = [...DB.quotes].sort((a,b)=> (b.fecha||'').localeCompare(a.fecha||'')).slice(0,6);
+
+  return `
+  <div class="page-head">
+    <div><h1 class="page-title">Panel principal</h1><div class="page-sub">Resumen general del taller — ${now.toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'})}</div></div>
+    <button class="btn btn-primary" data-nav="cotizador">+ Nueva cotización</button>
+  </div>
+  <div class="kpi-grid">
+    ${kpis.map(k=>`<div class="card kpi"><div class="kpi-accent" style="background:${k.accent}"></div><div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}</div></div>`).join('')}
+  </div>
+  <div class="grid-2col">
+    <div class="card pad">
+      <div class="section-title">Actividad reciente</div>
+      ${recientes.length===0 ? emptyState('◆','Aún no hay cotizaciones registradas.') : `
+      <div class="table-wrap"><table>
+        <tr><th>N°</th><th>Cliente</th><th>Producto</th><th>Fecha</th><th>Estado</th><th>Valor</th></tr>
+        ${recientes.map(q=>{
+          const c = getClient(q.clienteId);
+          const calc = calcQuote(q);
+          return `<tr class="row-hover" style="cursor:pointer" data-nav="cotizador" data-param-id="${q.id}">
+            <td><span class="shop-tag">${q.numero}</span></td>
+            <td>${esc(c?c.nombre:'—')}</td><td>${esc(quoteProductSummary(q))}</td><td>${fmtDate(q.fecha)}</td>
+            <td>${estadoBadge(q)}</td><td class="mono">${fmtMoney(calc.precioVenta)}</td></tr>`;
+        }).join('')}
+      </table></div>`}
+    </div>
+    <div class="card pad">
+      <div class="section-title">Entregas próximas</div>
+      ${renderAgendaMini()}
+    </div>
+  </div>`;
+}
+function estadoBadge(q){
+  if(q.estado==='cotizacion') return `<span class="badge badge-quote">Cotización</span>`;
+  if(q.estado==='cancelada') return `<span class="badge badge-cancel">Cancelada</span>`;
+  const op = DB.productionOrders.find(o=>o.quoteId===q.id);
+  if(op) return `<span class="badge ${opBadgeClass(op.estado)}">${OP_LABELS[op.estado]}</span>`;
+  return `<span class="badge badge-ok">Vendida</span>`;
+}
+function renderAgendaMini(){
+  const list = DB.productionOrders.filter(o=> !['entregado'].includes(o.estado) && o.fechaEntregaEstimada)
+    .sort((a,b)=> a.fechaEntregaEstimada.localeCompare(b.fechaEntregaEstimada)).slice(0,6);
+  if(list.length===0) return emptyState('▨','No hay entregas programadas.');
+  return list.map(o=>{
+    const q = getQuote(o.quoteId); const c = q?getClient(q.clienteId):null;
+    const d = daysBetween(todayStr(), o.fechaEntregaEstimada);
+    let tag = d<0 ? `<span class="badge badge-cancel">Atrasada ${Math.abs(d)}d</span>` : d===0 ? `<span class="badge badge-pend">Hoy</span>` : `<span class="badge badge-prod">En ${d}d</span>`;
+    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--line);">
+      <div><div style="font-weight:600; font-size:13.5px;">${esc(c?c.nombre:'—')}</div><div class="small-muted">${esc(q?quoteProductSummary(q):'')} · ${fmtDate(o.fechaEntregaEstimada)}</div></div>
+      ${tag}</div>`;
+  }).join('');
+}
+function emptyState(icon, msg){ return `<div class="empty-state"><div class="em-icon">${icon}</div><div>${msg}</div></div>`; }
+
+/* =========================================================================
+   CLIENTES
+   ========================================================================= */
+function viewClientes(){
+  const q = VIEW.params.search || '';
+  const detailId = VIEW.params.detail;
+  if(detailId) return viewClienteDetail(detailId);
+  const filtered = DB.clients.filter(c=>{
+    if(!q) return true;
+    const s = q.toLowerCase();
+    return (c.nombre||'').toLowerCase().includes(s) || (c.telefono||'').includes(s) || (c.ciudad||'').toLowerCase().includes(s);
+  }).sort((a,b)=> (a.nombre||'').localeCompare(b.nombre||''));
+
+  return `
+  <div class="page-head">
+    <div><h1 class="page-title">Clientes</h1><div class="page-sub">${DB.clients.length} clientes registrados</div></div>
+    <button class="btn btn-primary" data-action="new-client">+ Nuevo cliente</button>
+  </div>
+  <div class="card pad">
+    <div class="searchbox" style="max-width:340px; margin-bottom:16px;">
+      <input type="text" placeholder="Buscar por nombre, teléfono o ciudad..." value="${esc(q)}" oninput="nav('clientes',{search:this.value})">
+    </div>
+    ${filtered.length===0 ? emptyState('●','No se encontraron clientes.') : `
+    <div class="table-wrap"><table>
+      <tr><th>Nombre</th><th>Teléfono</th><th>Ciudad</th><th>Total comprado</th><th>Saldo</th><th></th></tr>
+      ${filtered.map(c=>{
+        const stats = clientStats(c.id);
+        return `<tr class="row-hover" style="cursor:pointer" onclick="nav('clientes',{detail:'${c.id}'})">
+          <td style="font-weight:600">${esc(c.nombre)}</td><td>${esc(c.telefono)}</td><td>${esc(c.ciudad)}</td>
+          <td class="mono">${fmtMoney(stats.totalComprado)}</td><td class="mono">${fmtMoney(stats.saldo)}</td>
+          <td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openClientModal('${c.id}')">Editar</button></td></tr>`;
+      }).join('')}
+    </table></div>`}
+  </div>`;
+}
+function clientStats(clientId){
+  const qs = DB.quotes.filter(q=>q.clienteId===clientId);
+  const compras = qs.filter(q=>q.estado==='vendida');
+  const totalComprado = compras.reduce((s,q)=>s+calcQuote(q).precioVenta,0);
+  const saldo = compras.reduce((s,q)=>s+saldoPendiente(q),0);
+  return {cotizaciones: qs.length, compras: compras.length, totalComprado, saldo};
+}
+function viewClienteDetail(id){
+  const c = getClient(id);
+  if(!c) { nav('clientes'); return ''; }
+  const stats = clientStats(id);
+  const qs = DB.quotes.filter(q=>q.clienteId===id).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  return `
+  <div class="page-head">
+    <div>
+      <button class="link-btn" onclick="nav('clientes')">← Todos los clientes</button>
+      <h1 class="page-title" style="margin-top:6px">${esc(c.nombre)}</h1>
+      <div class="page-sub">${esc(c.ciudad||'')} · ${esc(c.telefono||'')} ${c.email?'· '+esc(c.email):''}</div>
+    </div>
+    <div class="icon-btn-row">
+      <button class="btn btn-ghost" onclick="openClientModal('${c.id}')">Editar cliente</button>
+      <button class="btn btn-primary" onclick="startNewQuoteForClient('${c.id}')">+ Nueva cotización</button>
+    </div>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+    <div class="card kpi"><div class="kpi-accent" style="background:var(--blueprint-600)"></div><div class="kpi-label">Cotizaciones</div><div class="kpi-value">${stats.cotizaciones}</div></div>
+    <div class="card kpi"><div class="kpi-accent" style="background:var(--forest-600)"></div><div class="kpi-label">Compras</div><div class="kpi-value">${stats.compras}</div></div>
+    <div class="card kpi"><div class="kpi-accent" style="background:var(--forest-600)"></div><div class="kpi-label">Total comprado</div><div class="kpi-value">${fmtMoney(stats.totalComprado)}</div></div>
+    <div class="card kpi"><div class="kpi-accent" style="background:var(--rust-600)"></div><div class="kpi-label">Saldo pendiente</div><div class="kpi-value">${fmtMoney(stats.saldo)}</div></div>
+  </div>
+  <div class="card pad">
+    <div class="section-title">Historial</div>
+    ${c.observaciones? `<div class="small-muted" style="margin-bottom:12px;">Observaciones: ${esc(c.observaciones)}</div>`:''}
+    ${qs.length===0? emptyState('▤','Este cliente aún no tiene cotizaciones.') : `
+    <div class="table-wrap"><table>
+      <tr><th>N°</th><th>Fecha</th><th>Producto</th><th>Estado</th><th>Valor</th><th></th></tr>
+      ${qs.map(q=>{const calc=calcQuote(q); return `<tr class="row-hover" style="cursor:pointer" onclick="nav('cotizador',{id:'${q.id}'})">
+        <td><span class="shop-tag">${q.numero}</span></td><td>${fmtDate(q.fecha)}</td><td>${esc(quoteProductSummary(q))}</td>
+        <td>${estadoBadge(q)}</td><td class="mono">${fmtMoney(calc.precioVenta)}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); nav('cotizador',{id:'${q.id}'})">Abrir</button></td></tr>`}).join('')}
+    </table></div>`}
+  </div>`;
+}
+function openClientModal(id){
+  const c = id ? getClient(id) : {id:'', nombre:'', telefono:'', ciudad:'', direccion:'', email:'', cedulaNit:'', observaciones:''};
+  showModal(`
+    <h3>${id?'Editar cliente':'Nuevo cliente'}</h3>
+    <div class="field"><label>Nombre *</label><input type="text" id="cf-nombre" value="${esc(c.nombre)}" placeholder="Nombre completo"></div>
+    <div class="row-flex">
+      <div class="field"><label>Teléfono</label><input type="tel" id="cf-telefono" value="${esc(c.telefono)}" placeholder="300 000 0000"></div>
+      <div class="field"><label>Ciudad</label><input type="text" id="cf-ciudad" value="${esc(c.ciudad)}" placeholder="Ciudad"></div>
+    </div>
+    <div class="field"><label>Dirección</label><input type="text" id="cf-direccion" value="${esc(c.direccion)}" placeholder="Dirección"></div>
+    <div class="row-flex">
+      <div class="field"><label>Correo (opcional)</label><input type="email" id="cf-email" value="${esc(c.email)}" placeholder="correo@ejemplo.com"></div>
+      <div class="field"><label>C.C. / NIT (opcional)</label><input type="text" id="cf-cedulanit" value="${esc(c.cedulaNit)}" placeholder="Para PDF de cotización/cobro"></div>
+    </div>
+    <div class="field"><label>Observaciones</label><textarea id="cf-obs" rows="2">${esc(c.observaciones)}</textarea></div>
+    <div class="modal-close-row">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveClientModal('${id||''}')">Guardar cliente</button>
+    </div>
+  `);
+}
+function saveClientModal(id){
+  const nombre = document.getElementById('cf-nombre').value.trim();
+  if(!nombre){ toast('El nombre es obligatorio.'); return; }
+  const data = {
+    nombre, telefono: document.getElementById('cf-telefono').value.trim(),
+    ciudad: document.getElementById('cf-ciudad').value.trim(),
+    direccion: document.getElementById('cf-direccion').value.trim(),
+    email: document.getElementById('cf-email').value.trim(),
+    cedulaNit: document.getElementById('cf-cedulanit').value.trim(),
+    observaciones: document.getElementById('cf-obs').value.trim(),
+  };
+  if(id){ Object.assign(getClient(id), data); }
+  else { data.id = uid(); DB.clients.push(data); }
+  persist(); closeModal(); render();
+}
+
+/* =========================================================================
+   MODELOS (biblioteca)
+   ========================================================================= */
+function viewModelos(){
+  return `
+  <div class="page-head">
+    <div><h1 class="page-title">Biblioteca de modelos</h1><div class="page-sub">Modelos reutilizables para nuevas cotizaciones</div></div>
+    <button class="btn btn-primary" data-action="new-model">+ Nuevo modelo</button>
+  </div>
+  <div class="card pad">
+    ${DB.models.length===0 ? emptyState('▦','Aún no hay modelos guardados.') : `
+    <div class="model-grid">
+      ${DB.models.map(m=>`
+        <div class="card model-card" onclick="openModelModal('${m.id}')">
+          ${m.imagen? `<img src="${m.imagen}">` : `<div class="noimg">▦</div>`}
+          <div class="mc-body"><div class="mc-code">${esc(m.codigo||'')}</div><div class="mc-name">${esc(m.nombre)}</div><div class="small-muted">${esc(m.categoria||'')}</div></div>
+        </div>`).join('')}
+    </div>`}
+  </div>`;
+}
+function openModelModal(id){
+  const m = id ? getModel(id) : {id:'', codigo:'', nombre:'', categoria:'', imagen:'', descripcion:'', observaciones:''};
+  showModal(`
+    <h3>${id?'Editar modelo':'Nuevo modelo'}</h3>
+    <div class="row-flex">
+      <div class="field"><label>Código</label><input type="text" id="mf-codigo" value="${esc(m.codigo)}" placeholder="MOD-001"></div>
+      <div class="field"><label>Categoría</label><input type="text" id="mf-categoria" value="${esc(m.categoria)}" placeholder="Sofás, Camas..."></div>
+    </div>
+    <div class="field"><label>Nombre *</label><input type="text" id="mf-nombre" value="${esc(m.nombre)}" placeholder="Nombre del modelo"></div>
+    <div class="field"><label>Imagen</label><input type="file" id="mf-imagen" accept="image/*"><div id="mf-preview" style="margin-top:8px;">${m.imagen?`<img src="${m.imagen}" style="max-width:100%;max-height:140px;border-radius:8px;">`:''}</div></div>
+    <div class="field"><label>Descripción</label><textarea id="mf-desc" rows="2">${esc(m.descripcion)}</textarea></div>
+    <div class="field"><label>Observaciones</label><textarea id="mf-obs" rows="2">${esc(m.observaciones)}</textarea></div>
+    <div class="modal-close-row">
+      ${id?`<button class="btn btn-danger" onclick="deleteModel('${id}')">Eliminar</button>`:''}
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveModelModal('${id||''}')">Guardar modelo</button>
+    </div>
+  `);
+  document.getElementById('mf-imagen').addEventListener('change', function(e){
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev=>{ document.getElementById('mf-preview').innerHTML = `<img src="${ev.target.result}" style="max-width:100%;max-height:140px;border-radius:8px;">`; document.getElementById('mf-preview').dataset.img = ev.target.result; };
+    reader.readAsDataURL(file);
+  });
+}
+function saveModelModal(id){
+  const nombre = document.getElementById('mf-nombre').value.trim();
+  if(!nombre){ toast('El nombre es obligatorio.'); return; }
+  const preview = document.getElementById('mf-preview');
+  const imagen = preview.dataset.img || (id? (getModel(id).imagen||'') : '');
+  const data = {
+    nombre, codigo: document.getElementById('mf-codigo').value.trim(),
+    categoria: document.getElementById('mf-categoria').value.trim(),
+    descripcion: document.getElementById('mf-desc').value.trim(),
+    observaciones: document.getElementById('mf-obs').value.trim(),
+    imagen
+  };
+  if(id){ Object.assign(getModel(id), data); }
+  else { data.id = uid(); DB.models.push(data); }
+  persist(); closeModal(); render();
+}
+function deleteModel(id){
+  showConfirm('¿Eliminar este modelo de la biblioteca?', ()=>{
+    DB.models = DB.models.filter(m=>m.id!==id); persist(); render();
+  });
+}
+
+/* =========================================================================
+   MODAL helper
+   ========================================================================= */
+function showModal(innerHtml, extraClass){
+  let bg = document.getElementById('modal-bg');
+  if(!bg){ bg = document.createElement('div'); bg.id='modal-bg'; bg.className='modal-bg'; document.body.appendChild(bg); }
+  bg.innerHTML = `<div class="modal ${extraClass||''}">${innerHtml}</div>`;
+  bg.onclick = (e)=>{ if(e.target===bg) closeModal(); };
+}
+function closeModal(){ const bg = document.getElementById('modal-bg'); if(bg) bg.remove(); }
+function showConfirm(message, onYes){
+  showModal(`<h3>Confirmar</h3><p style="font-size:14px; color:var(--ink-600);">${esc(message)}</p>
+    <div class="modal-close-row">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-yes-btn">Sí, continuar</button>
+    </div>`);
+  document.getElementById('confirm-yes-btn').onclick = ()=>{ closeModal(); onYes(); };
+}
+function toast(message, onClick){
+  let t = document.getElementById('toast-box');
+  if(!t){
+    t = document.createElement('div'); t.id='toast-box';
+    t.style.cssText = 'position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--walnut-900);color:#fff;padding:11px 20px;border-radius:8px;z-index:200;font-size:13.5px;box-shadow:var(--shadow);transition:opacity .2s;max-width:80vw;text-align:center;';
+    document.body.appendChild(t);
+  }
+  t.textContent = message; t.style.opacity = '1';
+  t.style.cursor = onClick ? 'pointer' : 'default';
+  t.style.textDecoration = onClick ? 'underline' : 'none';
+  t.onclick = onClick ? function(){ t.style.opacity='0'; onClick(); } : null;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.style.opacity = '0'; }, onClick ? 7000 : 2600);
+}
+
+/* =========================================================================
+   COTIZADOR
+   ========================================================================= */
+function blankQuote(){
+  return {
+    id: uid(), numero: null, fecha: todayStr(), clienteId: null,
+    productos: [ blankProductoItem() ],
+    observaciones:'', fechaEntrega:'', imagen:'', condicionesPago: (DB.empresa && DB.empresa.formaPagoTexto) || '50% anticipo · 50% contra entrega',
+    tiempoFabricacion:'',
+    materiales:[
+      {id:uid(), material:'Mano de obra', cantidad:1, unidad:'', costoUnitario:0},
+      {id:uid(), material:'Pintura', cantidad:1, unidad:'', costoUnitario:0},
+      {id:uid(), material:'Transporte', cantidad:1, unidad:'', costoUnitario:0},
+    ],
+    multiplicador:2.5, precioManual:null, modoPrecio:'productos',
+    estado:'cotizacion', venta:null,
+    notasInternas:'',
+  };
+}
+function startNewQuoteForClient(clientId){
+  const d = blankQuote(); d.clienteId = clientId;
+  PENDING_DRAFT = d;
+  nav('cotizador', {id:d.id});
+}
+function viewCotizador(){
+  const editId = VIEW.params.id;
+  const key = editId || '__new__';
+  if(PENDING_DRAFT && PENDING_DRAFT.id === editId){
+    DRAFT = PENDING_DRAFT; PENDING_DRAFT = null; DRAFT._key = key;
+  } else if(!DRAFT || DRAFT._key !== key){
+    if(editId){
+      const existing = getQuote(editId);
+      DRAFT = existing ? JSON.parse(JSON.stringify(existing)) : blankQuote();
+    } else {
+      DRAFT = blankQuote();
+    }
+    DRAFT._key = key;
+  }
+  const client = DRAFT.clienteId ? getClient(DRAFT.clienteId) : null;
+  const calc = calcQuote(DRAFT);
+  const isSaved = !!getQuote(DRAFT.id);
+
+  return `
+  <div class="page-head">
+    <div><h1 class="page-title">${isSaved? 'Editar cotización '+ (DRAFT.numero||'') : 'Nueva cotización'}</h1>
+      <div class="page-sub">${isSaved? 'Modificando registro existente' : 'Los cálculos se actualizan en tiempo real'}</div></div>
+    <div class="icon-btn-row">
+      <button class="btn btn-ghost" onclick="nav('cotizaciones')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveQuote()">💾 Guardar cotización</button>
+    </div>
+  </div>
+  <div class="grid-2col">
+    <div style="display:flex; flex-direction:column; gap:18px;">
+
+      <div class="card pad">
+        <div class="section-title">Cliente</div>
+        ${client ? `<div class="chosen-chip"><span><b>${esc(client.nombre)}</b> · ${esc(client.telefono||'')} · ${esc(client.ciudad||'')}</span><span class="x" onclick="DRAFT.clienteId=null; render();">✕</span></div>`
+        : `<div style="position:relative;">
+             <input type="text" id="client-search" placeholder="Buscar cliente por nombre o teléfono..." oninput="renderClientAC(this.value)" autocomplete="off">
+             <div id="client-ac"></div>
+           </div>`}
+      </div>
+
+      <div class="card pad">
+        <div class="section-title">Datos generales</div>
+        <div class="row-flex">
+          <div class="field"><label>Fecha estimada de entrega</label><input type="date" value="${esc(DRAFT.fechaEntrega)}" oninput="DRAFT.fechaEntrega=this.value"></div>
+          <div class="field"><label>Tiempo estimado de fabricación</label><input type="text" value="${esc(DRAFT.tiempoFabricacion)}" placeholder="Ej: 4 semanas" oninput="DRAFT.tiempoFabricacion=this.value"></div>
+        </div>
+        <div class="field"><label>Observaciones para el cliente</label><textarea rows="2" oninput="DRAFT.observaciones=this.value">${esc(DRAFT.observaciones)}</textarea></div>
+        <div class="field"><label>🔒 Notas internas del taller</label><textarea rows="2" oninput="DRAFT.notasInternas=this.value" placeholder="Uso interno: instrucciones de producción, detalles de entrega, acuerdos verbales..." style="border-color:var(--brass-500); background:var(--brass-100);">${esc(DRAFT.notasInternas||'')}</textarea></div>
+        <div class="field"><label>Condiciones de pago</label><input type="text" value="${esc(DRAFT.condicionesPago)}" oninput="DRAFT.condicionesPago=this.value"></div>
+        <div class="field"><label>Agregar producto desde la biblioteca de modelos (opcional)</label>
+          <select onchange="applyModelToDraft(this.value); this.selectedIndex=0;">
+            <option value="">— Elegir modelo para agregarlo como producto —</option>
+            ${DB.models.map(m=>`<option value="${m.id}">${esc(m.nombre)} (${esc(m.codigo||'')})</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="card pad">
+        <div class="section-title">Productos de esta cotización <button class="btn btn-brass btn-sm" onclick="addProductoRow()">+ Agregar producto</button></div>
+        <div class="small-muted" style="margin-bottom:8px;">Una sola cotización puede incluir varios productos — ej. Sala (sofá, sillas, poltronas, cojines), Comedor (mesa, 4 sillas), Cama — cada uno con su propia cantidad, referencia y precio. Cada producto se puede asignar a un contratista distinto (👤).</div>
+        <div class="table-wrap"><table class="mat-table" id="productos-table">
+          <tr><th>Producto</th><th>Referencia</th><th>Medidas</th><th>Cant.</th><th>Precio unitario</th><th>Total</th><th></th></tr>
+          ${(DRAFT.productos||[]).map((p,i)=>productoRowHtml(p,i)).join('')}
+        </table></div>
+        ${(!DRAFT.productos || DRAFT.productos.length===0)? `<div class="small-muted" style="padding:10px 0;">Sin productos aún. Agrega el primero.</div>`:''}
+      </div>
+
+      <div class="card pad">
+        <div class="section-title">Materiales y costos internos <button class="btn btn-brass btn-sm" onclick="addMaterialRow()">+ Agregar material o costo</button></div>
+        ${DB.materialTemplates && DB.materialTemplates.length>0 ? `
+        <div class="row-flex" style="margin-bottom:8px; align-items:flex-end; gap:8px;">
+          <div class="field" style="flex:1; margin-bottom:0;"><label>Aplicar plantilla de materiales</label>
+            <select id="mat-template-select">
+              <option value="">— Elegir plantilla —</option>
+              ${DB.materialTemplates.map(t=>`<option value="${t.id}">${esc(t.nombre)}</option>`).join('')}
+            </select>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="margin-bottom:0;" onclick="applyMaterialTemplate()">Aplicar</button>
+        </div>` : ''}
+        <div class="table-wrap"><table class="mat-table" id="materiales-table">
+          <tr><th>Material / concepto</th><th>Cantidad</th><th>Unidad</th><th>Costo unitario</th><th>Total</th><th></th></tr>
+          ${(DRAFT.materiales||[]).map((m,i)=>materialRowHtml(m,i)).join('')}
+        </table></div>
+        ${(!DRAFT.materiales || DRAFT.materiales.length===0)? `<div class="small-muted" style="padding:10px 0;">Sin materiales aún. Agrega la primera fila.</div>`:''}
+        <div class="row-flex" style="margin-top:8px; align-items:center; gap:8px;">
+          <div class="small-muted" style="flex:1;">Base de costo interno de toda la cotización — se usa para calcular el margen, no se le muestra al cliente.</div>
+          <button class="btn btn-ghost btn-sm" onclick="saveMaterialTemplate()" title="Guardar los materiales actuales como plantilla reutilizable">💾 Guardar como plantilla</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <div class="card pad">
+        <div class="section-title">Cálculo</div>
+        <div class="summary-box" id="summary-box">${summaryHtml(calc)}</div>
+        <div class="divider"></div>
+        <div class="field"><label>Modo de precio de venta</label>
+          <div class="pill-toggle">
+            <div class="opt ${DRAFT.modoPrecio==='productos'?'active':''}" onclick="setPriceMode('productos')">Suma de productos</div>
+            <div class="opt ${DRAFT.modoPrecio==='manual'?'active':''}" onclick="setPriceMode('manual')">Precio manual total</div>
+          </div>
+        </div>
+        ${DRAFT.modoPrecio==='manual' ?
+          `<div class="field"><label>Precio de venta manual (total de la cotización)</label><input type="number" step="1000" value="${DRAFT.precioManual||0}" oninput="DRAFT.precioManual=this.value; updateTotals();"></div>`
+          : `<div class="small-muted">El precio total es la suma de (cantidad × precio unitario) de cada producto. Edita el precio unitario de cada producto directamente en la tabla.</div>`}
+        <div class="field"><label>Moneda</label>
+          <select onchange="DB.config.moneda=this.value; persist(); render();">
+            ${['COP','USD','EUR','MXN'].map(c=>`<option value="${c}" ${DB.config.moneda===c?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      ${isSaved ? `
+      <div class="card pad">
+        <div class="section-title">Acciones</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${DRAFT.estado==='cotizacion' ? `<button class="btn btn-primary" onclick="convertToSale()">Marcar como vendida</button>` : ''}
+          <button class="btn btn-ghost" onclick="downloadSmartPDF('${DRAFT.id}')">${DRAFT.estado==='vendida' ? '🧾 Descargar cuenta de cobro (Word)' : '📄 Descargar cotización (Word)'}</button>
+          <button class="btn btn-ghost" onclick="duplicateQuote()">Duplicar cotización</button>
+          <button class="btn btn-ghost" onclick="showHistorialCambios('${DRAFT.id}')">📋 Historial de cambios</button>
+          <button class="btn btn-brass" onclick="openWhatsAppBox()">Generar mensaje de WhatsApp</button>
+          <button class="btn btn-danger" onclick="deleteQuoteFromEditor()">Eliminar cotización</button>
+        </div>
+      </div>` : ''}
+
+      <div id="wa-container"></div>
+    </div>
+  </div>`;
+}
+function productoRowHtml(p,i){
+  const total = (Number(p.cantidad)||0)*(Number(p.precioUnitario)||0);
+  const asignado = (p.contratista||'').trim();
+  return `<tr data-prod-row="${i}">
+    <td><input type="text" value="${esc(p.nombre)}" data-prod-field="nombre" data-prod-idx="${i}" placeholder="Ej: Sofá 3 puestos"></td>
+    <td style="width:110px"><input type="text" value="${esc(p.referencia)}" data-prod-field="referencia" data-prod-idx="${i}" placeholder="Código"></td>
+    <td style="width:140px"><input type="text" value="${esc(p.medidas)}" data-prod-field="medidas" data-prod-idx="${i}" placeholder="Medidas"></td>
+    <td style="width:70px"><input type="number" min="1" value="${p.cantidad}" data-prod-field="cantidad" data-prod-idx="${i}"></td>
+    <td style="width:130px"><input type="number" value="${p.precioUnitario}" data-prod-field="precioUnitario" data-prod-idx="${i}"></td>
+    <td class="mat-total-cell" data-prod-total="${i}">${fmtMoney(total)}</td>
+    <td><div class="icon-btn-row">
+      <button class="btn btn-ghost btn-sm btn-icon" title="${asignado? 'Asignado a '+esc(asignado) : 'Asignar contratista'}" onclick="openAsignarContratistaItem(${i})" style="${asignado? 'color:var(--blueprint-600);':''}">👤</button>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="removeProductoRow(${i})">✕</button>
+    </div></td>
+  </tr>`;
+}
+function addProductoRow(){ DRAFT.productos.push(blankProductoItem()); render(); }
+function removeProductoRow(i){ DRAFT.productos.splice(i,1); render(); }
+function openAsignarContratistaItem(i){
+  const p = DRAFT.productos[i];
+  if(!p) return;
+  const wk = Number(DB.fixedCosts.weeksPerMonth)||4;
+  const nombres = getContratistaNombres();
+  showModal(`
+    <h3>Asignar contratista</h3>
+    <div class="small-muted" style="margin-bottom:14px;">Uso interno — quién fabricó "${esc(p.nombre)||'este producto'}" y cuánto le corresponde. Esto NUNCA aparece en la cotización ni en la cuenta de cobro del cliente.</div>
+    <div class="field"><label>Contratista</label>
+      <select id="asig-contratista">
+        <option value="">— Sin asignar —</option>
+        ${nombres.map(n=>`<option value="${esc(n)}" ${(p.contratista||'')===n?'selected':''}>${esc(n)}</option>`).join('')}
+      </select>
+      ${nombres.length===0? `<div class="small-muted" style="margin-top:6px;">No tienes contratistas aún. Ve a Costos fijos y marca un concepto como "Individual" en la columna Contrato.</div>`:''}
+    </div>
+    <div class="row-flex">
+      <div class="field"><label>Semana</label>
+        <select id="asig-semana">
+          ${Array.from({length:wk},(_,x)=>x+1).map(n=>`<option value="${n}" ${Number(p.contratistaSemana||1)===n?'selected':''}>Semana ${n}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Valor para el contratista</label><input type="number" id="asig-valor" value="${p.contratistaValor||0}" step="1000"></div>
+      <div class="field"><label>Estado de pago</label>
+        <select id="asig-estado-pago">
+          <option value="pendiente" ${(p.estadoPagoContratista||'pendiente')==='pendiente'?'selected':''}>Pendiente</option>
+          <option value="pagado" ${(p.estadoPagoContratista||'')==='pagado'?'selected':''}>Pagado</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-close-row">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveAsignarContratistaItem(${i})">Guardar asignación</button>
+    </div>
+  `);
+}
+function saveAsignarContratistaItem(i){
+  const p = DRAFT.productos[i];
+  if(!p) return;
+  p.contratista = document.getElementById('asig-contratista').value;
+  p.contratistaSemana = Number(document.getElementById('asig-semana').value)||1;
+  p.contratistaValor = Number(document.getElementById('asig-valor').value)||0;
+  p.estadoPagoContratista = document.getElementById('asig-estado-pago').value||'pendiente';
+  closeModal();
+  render();
+  // si la cotización ya existe guardada, persistimos la asignación de inmediato
+  const existing = getQuote(DRAFT.id);
+  if(existing){ existing.productos = JSON.parse(JSON.stringify(DRAFT.productos)); persist(); }
+}
+function materialRowHtml(m,i){
+  const total = (Number(m.cantidad)||0)*(Number(m.costoUnitario)||0);
+  return `<tr data-mat-row="${i}">
+    <td><input type="text" value="${esc(m.material)}" data-mat-field="material" data-mat-idx="${i}" placeholder="Ej: Madera de pino, Mano de obra, Pintura"></td>
+    <td style="width:90px"><input type="number" value="${m.cantidad}" data-mat-field="cantidad" data-mat-idx="${i}"></td>
+    <td style="width:90px"><input type="text" value="${esc(m.unidad)}" data-mat-field="unidad" data-mat-idx="${i}" placeholder="m, kg, un"></td>
+    <td style="width:130px"><input type="number" value="${m.costoUnitario}" data-mat-field="costoUnitario" data-mat-idx="${i}"></td>
+    <td class="mat-total-cell" data-mat-total="${i}">${fmtMoney(total)}</td>
+    <td><button class="btn btn-ghost btn-sm btn-icon" onclick="removeMaterialRow(${i})">✕</button></td>
+  </tr>`;
+}
+function summaryHtml(calc){
+  const modoTexto = DRAFT ? (DRAFT.modoPrecio==='productos' ? 'Suma de productos' : 'Precio manual') : '';
+  return `
+    <div class="summary-row"><span>Costo interno total (materiales)</span><span class="val">${fmtMoney(calc.totalMateriales)}</span></div>
+    ${calc.items && calc.items.length>0 ? `
+    <div class="divider"></div>
+    ${calc.items.filter(p=>(p.nombre||'').trim()!=='').map(p=>`<div class="summary-row" style="font-size:12px;"><span style="color:var(--ink-600);">· ${esc(p.nombre)} × ${p.cantidad}</span><span class="val">${fmtMoney((Number(p.cantidad)||0)*(Number(p.precioUnitario)||0))}</span></div>`).join('')}
+    ` : ''}
+    <div class="divider"></div>
+    <div class="summary-row"><span>Margen (precio - costo interno)</span><span class="val">${calc.margen.toFixed(1)}%</span></div>
+    <div class="summary-row"><span>Utilidad estimada</span><span class="val">${fmtMoney(calc.utilidad)}</span></div>
+    <div class="summary-row"><span>CO₂ estimado</span><span class="val">${calc.co2.toFixed(2)} kg</span></div>
+    <div class="summary-row total"><span>Total de la cotización</span><span class="val">${fmtMoney(calc.precioVenta)}</span></div>
+    <div class="summary-row" style="margin-top:4px;"><span>Abono sugerido (50%)</span><span class="val">${fmtMoney(calc.abonoSugerido)}</span></div>
+  `;
+}
+function updateTotals(){
+  if(!DRAFT) return;
+  // sync all row inputs currently in DOM into DRAFT (in case of manual mode inputs not yet synced)
+  document.querySelectorAll('[data-mat-idx]').forEach(inp=>{
+    const idx = +inp.dataset.matIdx, field = inp.dataset.matField;
+    if(DRAFT.materiales[idx]) DRAFT.materiales[idx][field] = inp.value;
+  });
+  document.querySelectorAll('[data-prod-idx]').forEach(inp=>{
+    const idx = +inp.dataset.prodIdx, field = inp.dataset.prodField;
+    if(DRAFT.productos[idx]) DRAFT.productos[idx][field] = inp.value;
+  });
+  // update row totals for materials
+  DRAFT.materiales.forEach((m,i)=>{
+    const cell = document.querySelector(`[data-mat-total="${i}"]`);
+    if(cell) cell.textContent = fmtMoney((Number(m.cantidad)||0)*(Number(m.costoUnitario)||0));
+  });
+  // update row totals for productos
+  DRAFT.productos.forEach((p,i)=>{
+    const cell = document.querySelector(`[data-prod-total="${i}"]`);
+    if(cell) cell.textContent = fmtMoney((Number(p.cantidad)||0)*(Number(p.precioUnitario)||0));
+  });
+  const calc = calcQuote(DRAFT);
+  const box = document.getElementById('summary-box');
+  if(box) box.innerHTML = summaryHtml(calc);
+}
+function attachCotizadorLiveHandlers(){
+  if(VIEW.name !== 'cotizador') return;
+  document.querySelectorAll('[data-mat-idx]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const idx = +inp.dataset.matIdx, field = inp.dataset.matField;
+      DRAFT.materiales[idx][field] = inp.value;
+      updateTotals();
+    });
+  });
+  document.querySelectorAll('[data-prod-idx]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const idx = +inp.dataset.prodIdx, field = inp.dataset.prodField;
+      DRAFT.productos[idx][field] = inp.value;
+      updateTotals();
+    });
+  });
+}
+function addMaterialRow(){ DRAFT.materiales.push({id:uid(), material:'', cantidad:1, unidad:'', costoUnitario:0}); render(); }
+function removeMaterialRow(i){ DRAFT.materiales.splice(i,1); render(); }
+function setPriceMode(mode){ DRAFT.modoPrecio = mode; render(); }
+function saveMaterialTemplate(){
+  const mats = (DRAFT.materiales||[]).filter(m=>(m.material||'').trim()!=='');
+  if(mats.length===0){ toast('Agrega al menos un material antes de guardar la plantilla.'); return; }
+  showModal(`
+    <h3>Guardar plantilla de materiales</h3>
+    <div class="small-muted" style="margin-bottom:12px;">Se guardarán ${mats.length} materiales como plantilla reutilizable para futuras cotizaciones.</div>
+    <div class="field"><label>Nombre de la plantilla</label><input type="text" id="tpl-nombre" placeholder="Ej: Sofá estándar, Cama con tapizado..." autofocus></div>
+    <div class="modal-close-row">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmSaveMaterialTemplate()">Guardar plantilla</button>
+    </div>
+  `);
+}
+function confirmSaveMaterialTemplate(){
+  const nombre = document.getElementById('tpl-nombre').value.trim();
+  if(!nombre){ toast('Escribe un nombre para la plantilla.'); return; }
+  if(!DB.materialTemplates) DB.materialTemplates = [];
+  DB.materialTemplates.push({ id:uid(), nombre, materiales: JSON.parse(JSON.stringify(DRAFT.materiales)) });
+  persist();
+  closeModal();
+  toast('Plantilla "'+nombre+'" guardada.');
+}
+function applyMaterialTemplate(){
+  const sel = document.getElementById('mat-template-select');
+  if(!sel || !sel.value) return;
+  const tpl = (DB.materialTemplates||[]).find(t=>t.id===sel.value);
+  if(!tpl) return;
+  showConfirm(`¿Reemplazar los materiales actuales con la plantilla "${tpl.nombre}"? Se perderán los materiales que ya tengas.`, ()=>{
+    DRAFT.materiales = JSON.parse(JSON.stringify(tpl.materiales.map(m=>({...m, id:uid()}))));
+    render();
+    toast('Plantilla aplicada.');
+  });
+}
+function applyModelToDraft(modelId){
+  if(!modelId) return;
+  const m = getModel(modelId);
+  if(!m) return;
+  const nuevo = blankProductoItem();
+  nuevo.nombre = m.nombre;
+  nuevo.referencia = m.codigo || '';
+  // si solo hay un producto vacío por defecto, lo reemplaza; si ya hay productos cargados, lo agrega
+  if(DRAFT.productos.length===1 && !DRAFT.productos[0].nombre){
+    DRAFT.productos[0] = nuevo;
+  } else {
+    DRAFT.productos.push(nuevo);
+  }
+  if(m.descripcion && !DRAFT.observaciones) DRAFT.observaciones = m.descripcion;
+  if(m.imagen && !DRAFT.imagen) DRAFT.imagen = m.imagen;
+  render();
+}
+function renderClientAC(term){
+  const box = document.getElementById('client-ac');
+  if(!term){ box.innerHTML=''; return; }
+  const s = term.toLowerCase();
+  const matches = DB.clients.filter(c=>(c.nombre||'').toLowerCase().includes(s) || (c.telefono||'').includes(s)).slice(0,6);
+  let html = `<div class="autocomplete-list">`;
+  matches.forEach(c=>{
+    html += `<div class="ac-item" onclick="DRAFT.clienteId='${c.id}'; render();"><div>${esc(c.nombre)}</div><div class="ac-sub">${esc(c.telefono||'')} · ${esc(c.ciudad||'')}</div></div>`;
+  });
+  html += `<div class="ac-item ac-new" onclick="quickAddClient('${esc(term).replace(/'/g,"\\'")}')">+ Crear cliente nuevo "${esc(term)}"</div>`;
+  html += `</div>`;
+  box.innerHTML = html;
+}
+function quickAddClient(name){
+  const c = {id:uid(), nombre:name, telefono:'', ciudad:'', direccion:'', email:'', cedulaNit:'', observaciones:''};
+  DB.clients.push(c); persist();
+  DRAFT.clienteId = c.id; render();
+  openClientModal(c.id);
+}
+function saveQuote(){
+  if(!DRAFT.clienteId){ toast('Selecciona o crea un cliente antes de guardar.'); return; }
+  const productosValidos = (DRAFT.productos||[]).filter(p=>(p.nombre||'').trim()!=='');
+  if(productosValidos.length===0){ toast('Agrega al menos un producto con nombre.'); return; }
+  const existing = getQuote(DRAFT.id);
+  if(existing){
+    // Registrar cambio en el historial interno
+    if(!existing.historialCambios) existing.historialCambios = [];
+    const resumenAntes = quoteProductSummary(existing);
+    const resumenDespues = quoteProductSummary(DRAFT);
+    const cambios = [];
+    if(resumenAntes!==resumenDespues) cambios.push('Productos: "'+resumenAntes+'" → "'+resumenDespues+'"');
+    if(calcQuote(existing).precioVenta !== calcQuote(DRAFT).precioVenta) cambios.push('Total: '+fmtMoney(calcQuote(existing).precioVenta)+' → '+fmtMoney(calcQuote(DRAFT).precioVenta));
+    if(existing.estado!==DRAFT.estado) cambios.push('Estado: '+existing.estado+' → '+DRAFT.estado);
+    existing.historialCambios.push({ fecha: new Date().toISOString(), descripcion: cambios.length>0 ? cambios.join(' · ') : 'Guardado sin cambios detectados' });
+    if(existing.historialCambios.length>30) existing.historialCambios = existing.historialCambios.slice(-30);
+    Object.assign(existing, JSON.parse(JSON.stringify(DRAFT)));
+    existing.historialCambios = JSON.parse(JSON.stringify(DRAFT.historialCambios||existing.historialCambios));
+  } else {
+    DRAFT.numero = nextQuoteNumber();
+    DRAFT.historialCambios = [{ fecha: new Date().toISOString(), descripcion: 'Cotización creada' }];
+    DB.quotes.push(JSON.parse(JSON.stringify(DRAFT)));
+  }
+  persist();
+  toast('Cotización guardada. Ya puedes marcarla como vendida cuando quieras.');
+  nav('cotizador', {id: DRAFT.id});
+}
+function duplicateQuote(){
+  const copy = JSON.parse(JSON.stringify(DRAFT));
+  copy.id = uid(); copy.numero = nextQuoteNumber(); copy.estado='cotizacion'; copy.venta=null; copy.fecha = todayStr();
+  copy.historialCambios = [{ fecha: new Date().toISOString(), descripcion: 'Duplicada desde '+DRAFT.numero }];
+  DB.quotes.push(copy); persist();
+  nav('cotizador', {id: copy.id});
+}
+function showHistorialCambios(quoteId){
+  const q = getQuote(quoteId) || DRAFT;
+  const cambios = (q.historialCambios||[]).slice().reverse();
+  showModal(`
+    <h3>Historial de cambios · ${esc(q.numero||'Sin guardar')}</h3>
+    ${cambios.length===0 ? `<div class="small-muted">Aún no hay cambios registrados. Los cambios se registran automáticamente cada vez que guardas.</div>` : `
+    <div class="table-wrap"><table>
+      <tr><th>Fecha y hora</th><th>Descripción</th></tr>
+      ${cambios.map(c=>{
+        const dt = new Date(c.fecha);
+        const label = isNaN(dt) ? c.fecha : dt.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+        return `<tr><td style="white-space:nowrap; color:var(--ink-600); font-size:12px;">${esc(label)}</td><td style="font-size:12.5px;">${esc(c.descripcion)}</td></tr>`;
+      }).join('')}
+    </table></div>`}
+    <div class="modal-close-row"><button class="btn btn-primary" onclick="closeModal()">Cerrar</button></div>
+  `);
+}
+function deleteQuoteFromEditor(){
+  showConfirm('¿Eliminar esta cotización permanentemente? También se eliminará su orden de producción si existe.', ()=>{
+    DB.quotes = DB.quotes.filter(q=>q.id!==DRAFT.id);
+    DB.productionOrders = DB.productionOrders.filter(o=>o.quoteId!==DRAFT.id);
+    persist();
+    nav('cotizaciones');
+  });
+}
+function markQuoteAsSold(quoteId){
+  const existing = getQuote(quoteId);
+  if(!existing){ toast('Cotización no encontrada.'); return null; }
+  existing.estado = 'vendida';
+  existing.venta = { anticipo:0, estadoPago:'pendiente', fecha: todayStr() };
+  const op = {
+    id: uid(), numero: nextOPNumber(), quoteId: existing.id, estado:'pendiente',
+    fechaInicio: todayStr(), fechaEntregaEstimada: existing.fechaEntrega || '', observaciones:''
+  };
+  DB.productionOrders.push(op);
+  persist();
+  return op;
+}
+function convertToSale(){
+  if(!DRAFT || !getQuote(DRAFT.id)){ toast('Guarda la cotización primero.'); return; }
+  const op = markQuoteAsSold(DRAFT.id);
+  if(!op) return;
+  DRAFT = JSON.parse(JSON.stringify(getQuote(DRAFT.id)));
+  DRAFT._key = DRAFT.id;
+  render();
+  toast('Venta registrada. Se generó la orden de producción ' + op.numero + '.');
+}
+function markSoldFromList(quoteId){
+  const op = markQuoteAsSold(quoteId);
+  if(!op) return;
+  render();
+  toast('Venta registrada. Se generó la orden de producción ' + op.numero + '.');
+}
+function openWhatsAppBox(){
+  const c = getClient(DRAFT.clienteId);
+  const calc = calcQuote(DRAFT);
+  const listaProductos = (DRAFT.productos||[]).filter(p=>(p.nombre||'').trim()!=='')
+    .map(p=>`• ${p.nombre} (Cant: ${p.cantidad})`).join('\n');
+  const msg = `Hola ${c?c.nombre:''}! Aquí está el resumen de tu cotización:
+
+*${DRAFT.numero||'(sin guardar)'}*
+Fecha: ${fmtDate(DRAFT.fecha)}
+Productos:
+${listaProductos}
+Valor total del pedido: ${fmtMoney(calc.precioVenta)}
+Condiciones de pago: ${DRAFT.condicionesPago}
+Entrega estimada: ${DRAFT.fechaEntrega?fmtDate(DRAFT.fechaEntrega):'Por confirmar'}
+${DRAFT.observaciones? 'Observaciones: '+DRAFT.observaciones : ''}
+
+¡Gracias por tu confianza!`;
+  const phoneDigits = (c && c.telefono) ? c.telefono.replace(/\D/g,'') : '';
+  document.getElementById('wa-container').innerHTML = `
+    <div class="card pad wa-box">
+      <div class="section-title">Mensaje para WhatsApp</div>
+      <textarea id="wa-text">${esc(msg)}</textarea>
+      <div class="icon-btn-row" style="margin-top:10px;">
+        <button class="btn btn-ghost btn-sm" onclick="copyWaText()">📋 Copiar mensaje</button>
+        <button class="btn btn-brass btn-sm" onclick="openWa('${phoneDigits}')">Abrir WhatsApp</button>
+      </div>
+      <div class="small-muted" style="margin-top:6px;">${phoneDigits? '': 'El cliente no tiene teléfono registrado; agrega uno para abrir el chat directo.'}</div>
+    </div>`;
+}
+function copyWaText(){
+  const t = document.getElementById('wa-text').value;
+  navigator.clipboard.writeText(t).then(()=>toast('Mensaje copiado.')).catch(()=>toast('No se pudo copiar automáticamente. Selecciona el texto manualmente.'));
+}
+function openWa(phone){
+  const t = encodeURIComponent(document.getElementById('wa-text').value);
+  const url = phone ? `https://wa.me/${phone}?text=${t}` : `https://wa.me/?text=${t}`;
+  window.open(url, '_blank');
+}
+
+/* =========================================================================
+   COTIZACIONES (list)
+   ========================================================================= */
+function viewCotizaciones(){
+  const f = VIEW.params || {};
+  let list = [...DB.quotes];
+  if(f.search){
+    const s = f.search.toLowerCase();
+    list = list.filter(q=>{
+      const c = getClient(q.clienteId);
+      return (q.numero||'').toLowerCase().includes(s) || quoteProductSummary(q).toLowerCase().includes(s) || (c && c.nombre.toLowerCase().includes(s));
+    });
+  }
+  if(f.estado) list = list.filter(q=>q.estado===f.estado);
+  list.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+
+  return `
+  <div class="page-head">
+    <div><h1 class="page-title">Cotizaciones</h1><div class="page-sub">${DB.quotes.length} registradas en total</div></div>
+    <button class="btn btn-primary" data-nav="cotizador">+ Nueva cotización</button>
+  </div>
+  <div class="card pad">
+    <div class="row-flex" style="margin-bottom:14px;">
+      <div class="field searchbox" style="max-width:320px;"><input type="text" placeholder="Buscar por N°, producto o cliente" value="${esc(f.search||'')}" oninput="nav('cotizaciones', Object.assign({}, VIEW.params, {search:this.value}))"></div>
+      <div class="field" style="max-width:200px;"><select onchange="nav('cotizaciones', Object.assign({}, VIEW.params, {estado:this.value}))">
+        <option value="">Todos los estados</option>
+        <option value="cotizacion" ${f.estado==='cotizacion'?'selected':''}>Cotización</option>
+        <option value="vendida" ${f.estado==='vendida'?'selected':''}>Vendida</option>
+        <option value="cancelada" ${f.estado==='cancelada'?'selected':''}>Cancelada</option>
+      </select></div>
+    </div>
+    ${list.length===0 ? emptyState('▤','No hay cotizaciones que coincidan.') : `
+    <div class="table-wrap"><table>
+      <tr><th>N°</th><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Estado</th><th>Valor</th><th></th></tr>
+      ${list.map(q=>{
+        const c = getClient(q.clienteId); const calc = calcQuote(q);
+        return `<tr class="row-hover" style="cursor:pointer" onclick="nav('cotizador',{id:'${q.id}'})">
+          <td><span class="shop-tag">${q.numero}</span></td><td>${fmtDate(q.fecha)}</td>
+          <td>${esc(c?c.nombre:'—')}</td><td>${esc(quoteProductSummary(q))}</td><td>${estadoBadge(q)}</td>
+          <td class="mono">${fmtMoney(calc.precioVenta)}</td>
+          <td><div class="icon-btn-row">
+            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); nav('cotizador',{id:'${q.id}'})">Abrir</button>
+            ${q.estado==='cotizacion' ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); markSoldFromList('${q.id}')">✔ Marcar vendida</button>` : ''}
+            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); downloadSmartPDF('${q.id}')" title="Descargar Word">${q.estado==='vendida' ? '🧾 Cuenta de cobro' : '📄 Cotización'}</button>
+          </div></td></tr>`;
+      }).join('')}
+    </table></div>`}
+  </div>`;
+}
+
+/* =========================================================================
+   VENTAS
+   ========================================================================= */
+function viewVentas(){
+  const ventas = DB.quotes.filter(q=>q.estado==='vendida').sort((a,b)=>(b.venta?.fecha||'').localeCompare(a.venta?.fecha||''));
+  return `
+  <div class="page-head"><div><h1 class="page-title">Ventas</h1><div class="page-sub">${ventas.length} ventas registradas · La columna "Asignado a" es de uso interno y nunca aparece en los documentos del cliente</div></div></div>
+  <div class="card pad">
+    ${ventas.length===0? emptyState('▥','Aún no hay ventas. Marca una cotización como vendida.') : `
+    <div class="table-wrap"><table>
+      <tr><th>N°</th><th>Cliente</th><th>Producto</th><th>Asignado a</th><th>Valor</th><th>Anticipo</th><th>Saldo</th><th>Estado pago</th><th></th></tr>
+      ${ventas.map(q=>{
+        const c = getClient(q.clienteId); const calc = calcQuote(q); const saldo = saldoPendiente(q);
+        const items = q.productos||[];
+        const asignados = items.filter(p=>(p.contratista||'').trim()!=='').length;
+        const asignadoLabel = items.length===0 ? '—'
+          : asignados===0 ? `<button class="btn btn-ghost btn-sm" onclick="openAsignarContratistasVenta('${q.id}')">+ Asignar</button>`
+          : asignados===items.length ? `<span class="badge badge-ok" style="cursor:pointer" onclick="openAsignarContratistasVenta('${q.id}')" title="Ver asignación por producto">👤 Asignado (${items.length})</span>`
+          : `<span class="badge badge-pend" style="cursor:pointer" onclick="openAsignarContratistasVenta('${q.id}')" title="Ver asignación por producto">👤 ${asignados}/${items.length} asignados</span>`;
+        return `<tr class="row-hover">
+          <td><span class="shop-tag" style="cursor:pointer" onclick="nav('cotizador',{id:'${q.id}'})">${q.numero}</span></td><td>${esc(c?c.nombre:'—')}</td><td>${esc(quoteProductSummary(q))}</td>
+          <td>${asignadoLabel}</td>
+          <td class="mono">${fmtMoney(calc.precioVenta)}</td>
+          <td class="mono"><input type="number" value="${q.venta.anticipo}" style="width:110px" onchange="updateAnticipo('${q.id}', this.value)"></td>
+          <td class="mono">${fmtMoney(saldo)}</td>
+          <td><select onchange="updateEstadoPago('${q.id}', this.value)">
+            <option value="pendiente" ${q.venta.estadoPago==='pendiente'?'selected':''}>Pendiente</option>
+            <option value="abonado" ${q.venta.estadoPago==='abonado'?'selected':''}>Abonado</option>
+            <option value="pagado" ${q.venta.estadoPago==='pagado'?'selected':''}>Pagado</option>
+          </select></td>
+          <td><div class="icon-btn-row">
+            <button class="btn btn-ghost btn-sm" onclick="nav('cotizador',{id:'${q.id}'})">Abrir</button>
+            <button class="btn btn-ghost btn-sm" onclick="downloadSmartPDF('${q.id}')" title="Descargar Word">${q.estado==='vendida' ? '🧾 Cuenta de cobro' : '📄 Cotización'}</button>
+          </div></td>
+          </tr>`;
+      }).join('')}
+    </table></div>`}
+  </div>`;
+}
+function updateAnticipo(id, val){ const q=getQuote(id); q.venta.anticipo = Number(val)||0; persist(); render(); }
+function updateEstadoPago(id, val){ const q=getQuote(id); q.venta.estadoPago = val; persist(); render(); }
+function openAsignarContratistasVenta(quoteId){
+  const q = getQuote(quoteId);
+  if(!q) return;
+  const wk = Number(DB.fixedCosts.weeksPerMonth)||4;
+  const nombres = getContratistaNombres();
+  const items = q.productos||[];
+  showModal(`
+    <h3>Asignar contratistas</h3>
+    <div class="small-muted" style="margin-bottom:14px;">Uso interno — esta cotización tiene ${items.length} producto(s); cada uno puede ir a un contratista distinto. Esto NUNCA aparece en la cotización ni en la cuenta de cobro del cliente.</div>
+    <div class="table-wrap"><table>
+      <tr><th>Producto</th><th>Contratista</th><th>Semana</th><th>Valor</th><th>Estado pago</th></tr>
+      ${items.map((p,i)=>`<tr>
+        <td>${esc(p.nombre)||'(sin nombre)'}</td>
+        <td><select data-vasig-idx="${i}" data-vasig-field="contratista">
+          <option value="">— Sin asignar —</option>
+          ${nombres.map(n=>`<option value="${esc(n)}" ${(p.contratista||'')===n?'selected':''}>${esc(n)}</option>`).join('')}
+        </select></td>
+        <td><select data-vasig-idx="${i}" data-vasig-field="contratistaSemana" style="width:110px">
+          ${Array.from({length:wk},(_,x)=>x+1).map(n=>`<option value="${n}" ${Number(p.contratistaSemana||1)===n?'selected':''}>Semana ${n}</option>`).join('')}
+        </select></td>
+        <td><input type="number" data-vasig-idx="${i}" data-vasig-field="contratistaValor" value="${p.contratistaValor||0}" style="width:110px"></td>
+        <td><select data-vasig-idx="${i}" data-vasig-field="estadoPagoContratista" style="width:110px">
+          <option value="pendiente" ${(p.estadoPagoContratista||'pendiente')==='pendiente'?'selected':''}>Pendiente</option>
+          <option value="pagado" ${(p.estadoPagoContratista||'')==='pagado'?'selected':''}>Pagado</option>
+        </select></td>
+      </tr>`).join('')}
+    </table></div>
+    ${nombres.length===0? `<div class="small-muted" style="margin-top:8px;">No tienes contratistas aún. Ve a Costos fijos y marca un concepto como "Individual" en la columna Contrato.</div>`:''}
+    <div class="modal-close-row">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveAsignarContratistasVenta('${quoteId}')">Guardar asignaciones</button>
+    </div>
+  `);
+}
+function saveAsignarContratistasVenta(quoteId){
+  const q = getQuote(quoteId);
+  if(!q) return;
+  document.querySelectorAll('[data-vasig-idx]').forEach(el=>{
+    const idx = +el.dataset.vasigIdx, field = el.dataset.vasigField;
+    if(!q.productos[idx]) return;
+    if(field==='contratistaValor') q.productos[idx][field] = Number(el.value)||0;
+    else if(field==='contratistaSemana') q.productos[idx][field] = Number(el.value)||1;
+    else q.productos[idx][field] = el.value;
+  });
+  persist();
+  closeModal();
+  render();
+}
+
+/* =========================================================================
+   PRODUCCIÓN
+   ========================================================================= */
+function viewProduccion(){
+  const f = VIEW.params.estado || '';
+  let list = [...DB.productionOrders];
+  if(f) list = list.filter(o=>o.estado===f);
+  list.sort((a,b)=> (a.fechaEntregaEstimada||'9999').localeCompare(b.fechaEntregaEstimada||'9999'));
+  return `
+  <div class="page-head"><div><h1 class="page-title">Producción</h1><div class="page-sub">${DB.productionOrders.length} órdenes de producción</div></div></div>
+  <div class="card pad">
+    <div class="field" style="max-width:220px; margin-bottom:14px;">
+      <select onchange="nav('produccion',{estado:this.value})">
+        <option value="">Todos los estados</option>
+        ${OP_STATES.map(s=>`<option value="${s}" ${f===s?'selected':''}>${OP_LABELS[s]}</option>`).join('')}
+      </select>
+    </div>
+    ${list.length===0? emptyState('⚙','No hay órdenes de producción.') : `
+    <div class="table-wrap"><table>
+      <tr><th>OP</th><th>Cliente</th><th>Producto</th><th>Inicio</th><th>Entrega est.</th><th>Estado</th><th></th></tr>
+      ${list.map(o=>{
+        const q = getQuote(o.quoteId); const c = q? getClient(q.clienteId):null;
+        return `<tr class="row-hover">
+          <td><span class="shop-tag">${o.numero}</span></td><td>${esc(c?c.nombre:'—')}</td><td>${esc(q?quoteProductSummary(q):'—')}</td>
+          <td>${fmtDate(o.fechaInicio)}</td>
+          <td><input type="date" value="${o.fechaEntregaEstimada||''}" style="width:150px" onchange="updateOPDate('${o.id}', this.value)"></td>
+          <td><select onchange="updateOPState('${o.id}', this.value)">
+            ${OP_STATES.map(s=>`<option value="${s}" ${o.estado===s?'selected':''}>${OP_LABELS[s]}</option>`).join('')}
+          </select></td>
+          <td><button class="btn btn-ghost btn-sm" onclick="nav('cotizador',{id:'${o.quoteId}'})">Ver pedido</button></td>
+          </tr>`;
+      }).join('')}
+    </table></div>`}
+  </div>`;
+}
+function updateOPState(id, val){ getOP(id).estado = val; persist(); render(); }
+function updateOPDate(id, val){ getOP(id).fechaEntregaEstimada = val; persist(); render(); }
+
+/* =========================================================================
+   AGENDA
+   ========================================================================= */
+function viewAgenda(){
+  const active = DB.productionOrders.filter(o=> !['entregado'].includes(o.estado) && o.fechaEntregaEstimada);
+  const hoy = active.filter(o=> o.fechaEntregaEstimada===todayStr());
+  const atrasadas = active.filter(o=> o.fechaEntregaEstimada < todayStr());
+  const proximas = active.filter(o=> o.fechaEntregaEstimada > todayStr()).sort((a,b)=>a.fechaEntregaEstimada.localeCompare(b.fechaEntregaEstimada));
+
+  function block(title, items, tone){
+    return `<div class="card pad" style="flex:1; min-width:280px;">
+      <div class="section-title">${title} <span class="badge ${tone}">${items.length}</span></div>
+      ${items.length===0? `<div class="small-muted">Nada por aquí.</div>` : items.map(o=>{
+        const q = getQuote(o.quoteId); const c = q?getClient(q.clienteId):null;
+        return `<div style="padding:9px 0; border-bottom:1px solid var(--line);">
+          <div style="font-weight:600; font-size:13.5px;">${esc(c?c.nombre:'—')} — ${esc(q?quoteProductSummary(q):'')}</div>
+          <div class="small-muted">${o.numero} · Entrega: ${fmtDate(o.fechaEntregaEstimada)} · ${OP_LABELS[o.estado]}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+  return `
+  <div class="page-head"><div><h1 class="page-title">Agenda de entregas</h1><div class="page-sub">Vista automática según las órdenes de producción activas</div></div></div>
+  <div style="display:flex; gap:16px; flex-wrap:wrap;">
+    ${block('Entregas de hoy', hoy, 'badge-pend')}
+    ${block('Atrasadas', atrasadas, 'badge-cancel')}
+    ${block('Próximas', proximas, 'badge-prod')}
+  </div>`;
+}
+
+/* =========================================================================
+   COSTOS FIJOS (escenarios alto / medio / bajo)
+   ========================================================================= */
+function calcFixedCosts(){
+  const fc = DB.fixedCosts;
+  const wk = Number(fc.weeksPerMonth)||4;
+  const partners = Number(fc.partners)||1;
+  fc.rows.forEach(r=> ensureRowWeeks(r, wk));
+  const semanas = [];
+  for(let i=0;i<wk;i++){
+    const total = fc.rows.reduce((s,r)=> s + rowWeeklyValue(r, i, wk), 0);
+    semanas.push({ n:i+1, total, porSocio: partners>0 ? total/partners : total });
+  }
+  const promedio = semanas.reduce((s,w)=>s+w.total, 0);
+  const promedioPorSocio = partners>0 ? promedio/partners : promedio;
+  return {promedio, promedioPorSocio, semanas, wk, partners};
+}
+function viewCostosFijos(){
+  const fc = DB.fixedCosts;
+  const wk = Number(fc.weeksPerMonth)||4;
+  fc.rows.forEach(r=> ensureRowWeeks(r, wk));
+  const calc = calcFixedCosts();
+  return `
+  <div class="page-head">
+    <div><h1 class="page-title">Costos fijos</h1><div class="page-sub">Gastos y contratistas — los contratistas se calculan automáticamente desde lo asignado en Ventas</div></div>
+    <div class="icon-btn-row">
+      <button class="btn btn-ghost" onclick="nav('contratistas')">◐ Control de contratistas</button>
+      <button class="btn btn-primary" onclick="addFixedCostRow()">+ Agregar concepto</button>
+    </div>
+  </div>
+  <div class="card pad">
+    <div class="row-flex" style="margin-bottom:16px;">
+      <div class="field" style="max-width:190px;"><label>Semanas por mes</label><input type="number" min="1" value="${fc.weeksPerMonth}" onchange="DB.fixedCosts.weeksPerMonth=this.value; persist(); render();"></div>
+      <div class="field" style="max-width:190px;"><label>N° de socios (reparto)</label><input type="number" min="1" value="${fc.partners}" oninput="DB.fixedCosts.partners=this.value; updateFixedCostsSummary();"></div>
+    </div>
+    <div class="table-wrap"><table class="mat-table" id="fc-table">
+      <tr><th>Concepto</th><th>Contrato</th>${Array.from({length:wk},(_,i)=>`<th>Semana ${i+1}</th>`).join('')}<th>Total mensual</th><th></th></tr>
+      ${fc.rows.map((r,i)=>fixedCostRowHtml(r,i,wk)).join('')}
+    </table></div>
+    <div class="small-muted" style="margin-top:8px;">
+      <b>Gasto</b>: valor editable manualmente semana a semana (arriendo, servicios, etc.) — usa <b>⇉</b> para copiar el valor de la semana 1 al resto.<br>
+      <b>Individual</b>: marca así a un contratista. Sus valores semanales <b>ya no se escriben aquí</b>: se calculan automáticamente sumando lo que le asignes a cada mueble en la pestaña <b>Ventas</b>. Revisa el detalle en <b>Control de contratistas</b>.
+    </div>
+  </div>
+  <div class="kpi-grid" style="margin-top:20px; grid-template-columns:repeat(auto-fit,minmax(190px,1fr));">
+    ${calc.semanas.map(s=>`
+      <div class="card kpi" id="fc-semana-card-${s.n}" style="cursor:pointer;" onclick="showFixedCostWeekDetail(${s.n})" title="Ver y editar el desglose de esta semana">
+        <div class="kpi-accent" style="background:var(--blueprint-600)"></div>
+        <div class="kpi-label">Semana ${s.n}</div>
+        <div class="kpi-value" id="fc-semana-${s.n}">${fmtMoney(s.total)}</div>
+        <div class="small-muted" style="margin-top:4px;">Por socio: <span id="fc-semana-socio-${s.n}">${fmtMoney(s.porSocio)}</span></div>
+      </div>`).join('')}
+    <div class="card kpi" id="fc-mes-card" style="cursor:pointer;" onclick="showFixedCostMonthDetail()" title="Ver desglose del mes">
+      <div class="kpi-accent" style="background:var(--forest-600)"></div>
+      <div class="kpi-label">Consolidado del mes</div>
+      <div class="kpi-value" id="fc-consolidado-mes">${fmtMoney(calc.promedio)}</div>
+      <div class="small-muted" style="margin-top:4px;">Por socio: <span id="fc-consolidado-mes-socio">${fmtMoney(calc.promedioPorSocio)}</span></div>
+    </div>
+    <div class="card pad" style="background:var(--brass-100);">
+      <div class="section-title">Total del mes (suma de las semanas)</div>
+      <div class="summary-row"><span>Total mensual</span><span class="val" id="fc-total-promedio">${fmtMoney(calc.promedio)}</span></div>
+      <div class="summary-row total"><span>Por socio</span><span class="val" id="fc-socio-promedio">${fmtMoney(calc.promedioPorSocio)}</span></div>
+    </div>
+  </div>`;
+}
+function fixedCostDetailTotal(scale, weekNum){
+  const fc = DB.fixedCosts;
+  const wk = Number(fc.weeksPerMonth)||4;
+  return fc.rows.reduce((s,r)=>{
+    ensureRowWeeks(r, wk);
+    if(scale==='week') return s + rowWeeklyValue(r, weekNum-1, wk);
+    return s + Array.from({length:wk},(_,wi)=>rowWeeklyValue(r, wi, wk)).reduce((a,v)=>a+v,0);
+  }, 0);
+}
+function fixedCostDetailModalBody(scale, weekNum){
+  const fc = DB.fixedCosts;
+  const wk = Number(fc.weeksPerMonth)||4;
+  const partners = Number(fc.partners)||1;
+  const title = scale==='week' ? ('Detalle · Semana '+weekNum) : 'Consolidado del mes';
+  const subtitle = scale==='week'
+    ? 'Edita el valor real de cada concepto tipo Gasto para ESTA semana (el cambio solo afecta a la semana '+weekNum+'). Los contratistas (Individual) se calculan solos desde Ventas y no se editan aquí.'
+    : 'Total mensual de cada concepto (suma de sus semanas). Editar un valor de tipo Gasto aquí lo reparte en partes iguales entre las '+wk+' semanas. Los contratistas (Individual) no son editables — se calculan desde Ventas.';
+  const colHeader = scale==='week' ? 'Valor de la semana' : 'Total mensual';
+  const total = fixedCostDetailTotal(scale, weekNum);
+  const weekArg = scale==='week' ? weekNum : '';
+  return `
+    <h3 style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+      <span>${esc(title)}</span>
+      <button class="btn btn-brass btn-sm" onclick="addFixedCostDetailRow('${scale}', ${weekArg===''?'null':weekArg})">+ Agregar concepto</button>
+    </h3>
+    <div class="small-muted" style="margin-bottom:12px;">${esc(subtitle)}</div>
+    <div class="table-wrap"><table>
+      <tr><th>Concepto</th><th>Contrato</th><th>${esc(colHeader)}</th><th></th></tr>
+      ${fc.rows.map((r,i)=>{
+        ensureRowWeeks(r, wk);
+        const isIndividual = r.tipoContrato==='individual';
+        const val = scale==='week' ? rowWeeklyValue(r, weekNum-1, wk) : Array.from({length:wk},(_,wi)=>rowWeeklyValue(r, wi, wk)).reduce((a,v)=>a+v,0);
+        const valueInput = isIndividual
+          ? `<input type="text" value="${fmtMoney(val)}" disabled title="Calculado automáticamente desde Ventas" style="background:var(--sawdust-100); color:var(--ink-600); cursor:not-allowed;">`
+          : `<input type="number" value="${val}" data-fc-detail-idx="${i}" data-fc-detail-scale="${scale}" data-fc-detail-week="${weekArg}" oninput="updateFixedCostDetailValue(this)">`;
+        return `<tr>
+        <td><input type="text" value="${esc(r.concepto)}" placeholder="Nombre del concepto" oninput="updateFixedCostDetailConcepto(${i}, this.value)"></td>
+        <td>${isIndividual? '<span class="badge badge-quote">Individual</span>' : '<span class="badge badge-ok">Gasto</span>'}</td>
+        <td style="width:150px">${valueInput}</td>
+        <td><button class="btn btn-ghost btn-sm btn-icon" onclick="removeFixedCostDetailRow(${i}, '${scale}', ${weekArg===''?'null':weekArg})">✕</button></td>
+      </tr>`;}).join('')}
+      ${fc.rows.length===0 ? `<tr><td colspan="4" class="small-muted" style="padding:10px 0;">Sin conceptos aún. Usa "+ Agregar concepto".</td></tr>` : ''}
+    </table></div>
+    <div class="divider"></div>
+    <div class="summary-row total"><span>Total</span><span class="val" id="fc-detail-total">${fmtMoney(total)}</span></div>
+    <div class="summary-row"><span>Por socio (${partners})</span><span class="val" id="fc-detail-total-socio">${fmtMoney(partners>0 ? total/partners : total)}</span></div>
+    <div class="modal-close-row"><button class="btn btn-primary" onclick="closeModal()">Cerrar</button></div>
+  `;
+}
+function updateFixedCostDetailConcepto(idx, value){
+  if(!DB.fixedCosts.rows[idx]) return;
+  DB.fixedCosts.rows[idx].concepto = value;
+  persist();
+}
+function addFixedCostDetailRow(scale, weekNum){
+  const wk = Number(DB.fixedCosts.weeksPerMonth)||4;
+  DB.fixedCosts.rows.push({id:uid(), concepto:'', tipoContrato:'gasto', valoresSemanales: Array(wk).fill(0)});
+  persist();
+  refreshFixedCostsCards();
+  showModal(fixedCostDetailModalBody(scale, weekNum));
+}
+function removeFixedCostDetailRow(idx, scale, weekNum){
+  DB.fixedCosts.rows.splice(idx,1);
+  persist();
+  refreshFixedCostsCards();
+  showModal(fixedCostDetailModalBody(scale, weekNum));
+}
+function updateFixedCostDetailValue(inputEl){
+  const idx = +inputEl.dataset.fcDetailIdx;
+  const scale = inputEl.dataset.fcDetailScale;
+  const weekNum = inputEl.dataset.fcDetailWeek ? +inputEl.dataset.fcDetailWeek : null;
+  const fc = DB.fixedCosts;
+  const wk = Number(fc.weeksPerMonth)||4;
+  const row = fc.rows[idx];
+  if(row.tipoContrato==='individual') return; // no editable: se calcula desde Ventas
+  ensureRowWeeks(row, wk);
+  const newVal = Number(inputEl.value)||0;
+  if(scale==='week'){
+    row.valoresSemanales[weekNum-1] = newVal;
+  } else {
+    const per = newVal / wk;
+    row.valoresSemanales = Array(wk).fill(per);
+  }
+  const total = fixedCostDetailTotal(scale, weekNum);
+  const partners = Number(fc.partners)||1;
+  const totalEl = document.getElementById('fc-detail-total'); if(totalEl) totalEl.textContent = fmtMoney(total);
+  const socioEl = document.getElementById('fc-detail-total-socio'); if(socioEl) socioEl.textContent = fmtMoney(partners>0 ? total/partners : total);
+  refreshFixedCostsCards();
+  persist();
+}
+function showFixedCostWeekDetail(weekNum){
+  showModal(fixedCostDetailModalBody('week', weekNum));
+}
+function showFixedCostMonthDetail(){
+  showModal(fixedCostDetailModalBody('month'));
+}
+function fixedCostRowHtml(r,i,wk){
+  ensureRowWeeks(r, wk);
+  const isIndividual = r.tipoContrato==='individual';
+  const total = Array.from({length:wk},(_,wi)=>rowWeeklyValue(r, wi, wk)).reduce((s,v)=>s+v,0);
+  const weekCells = Array.from({length:wk},(_,wi)=>{
+    const v = rowWeeklyValue(r, wi, wk);
+    if(isIndividual){
+      return `<td style="width:110px"><input type="text" value="${fmtMoney(v)}" data-fc-idx="${i}" data-fc-week="${wi}" disabled title="Calculado automáticamente desde Ventas" style="background:var(--sawdust-100); color:var(--ink-600); cursor:not-allowed;"></td>`;
+    }
+    return `<td style="width:110px"><input type="number" value="${v}" data-fc-field="semana" data-fc-idx="${i}" data-fc-week="${wi}"></td>`;
+  }).join('');
+  return `<tr data-fc-row="${i}">
+    <td><input type="text" value="${esc(r.concepto)}" data-fc-field="concepto" data-fc-idx="${i}"></td>
+    <td style="width:130px"><select data-fc-field="tipoContrato" data-fc-idx="${i}" onchange="updateFixedCostTipoContrato(${i}, this.value)">
+      <option value="gasto" ${!isIndividual?'selected':''}>Gasto</option>
+      <option value="individual" ${isIndividual?'selected':''}>Individual</option>
+    </select></td>
+    ${weekCells}
+    <td class="mat-total-cell" data-fc-prom="${i}">${fmtMoney(total)}</td>
+    <td><div class="icon-btn-row">
+      ${isIndividual ? '' : `<button class="btn btn-ghost btn-sm btn-icon" title="Copiar el valor de la semana 1 a todas las semanas" onclick="applySameValueAllWeeks(${i})">⇉</button>`}
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="removeFixedCostRow(${i})">✕</button>
+    </div></td>
+  </tr>`;
+}
+function updateFixedCostTipoContrato(i, value){
+  if(!DB.fixedCosts.rows[i]) return;
+  DB.fixedCosts.rows[i].tipoContrato = value;
+  persist();
+  render();
+}
+function applySameValueAllWeeks(i){
+  const fc = DB.fixedCosts;
+  const wk = Number(fc.weeksPerMonth)||4;
+  const row = fc.rows[i];
+  ensureRowWeeks(row, wk);
+  const v = Number(row.valoresSemanales[0])||0;
+  row.valoresSemanales = Array(wk).fill(v);
+  persist();
+  render();
+}
+function addFixedCostRow(){
+  const wk = Number(DB.fixedCosts.weeksPerMonth)||4;
+  DB.fixedCosts.rows.push({id:uid(), concepto:'', tipoContrato:'gasto', valoresSemanales: Array(wk).fill(0)});
+  persist(); render();
+}
+function removeFixedCostRow(i){ DB.fixedCosts.rows.splice(i,1); persist(); render(); }
+function refreshFixedCostsCards(){
+  if(VIEW.name==='costosfijos'){
+    const currentRowCount = document.querySelectorAll('[data-fc-row]').length;
+    if(currentRowCount !== DB.fixedCosts.rows.length){ render(); return; }
+  }
+  const calc = calcFixedCosts();
+  calc.semanas.forEach(s=>{
+    const t = document.getElementById('fc-semana-'+s.n); if(t) t.textContent = fmtMoney(s.total);
+    const p = document.getElementById('fc-semana-socio-'+s.n); if(p) p.textContent = fmtMoney(s.porSocio);
+  });
+  const tp = document.getElementById('fc-total-promedio'); if(tp) tp.textContent = fmtMoney(calc.promedio);
+  const sp = document.getElementById('fc-socio-promedio'); if(sp) sp.textContent = fmtMoney(calc.promedioPorSocio);
+  const cm = document.getElementById('fc-consolidado-mes'); if(cm) cm.textContent = fmtMoney(calc.promedio);
+  const cms = document.getElementById('fc-consolidado-mes-socio'); if(cms) cms.textContent = fmtMoney(calc.promedioPorSocio);
+  const wk = Number(DB.fixedCosts.weeksPerMonth)||4;
+  DB.fixedCosts.rows.forEach((r,i)=>{
+    ensureRowWeeks(r, wk);
+    const isIndividual = r.tipoContrato==='individual';
+    const total = Array.from({length:wk},(_,wi)=>rowWeeklyValue(r, wi, wk)).reduce((s,v)=>s+v,0);
+    const cell = document.querySelector(`[data-fc-prom="${i}"]`);
+    if(cell) cell.textContent = fmtMoney(total);
+    for(let wi=0; wi<wk; wi++){
+      const v = rowWeeklyValue(r, wi, wk);
+      const inp = document.querySelector(`input[data-fc-idx="${i}"][data-fc-week="${wi}"]`);
+      if(inp && document.activeElement!==inp) inp.value = isIndividual ? fmtMoney(v) : v;
+    }
+  });
+}
+function updateFixedCostsSummary(){
+  document.querySelectorAll('[data-fc-idx][data-fc-field="concepto"]').forEach(inp=>{
+    const idx = +inp.dataset.fcIdx;
+    if(DB.fixedCosts.rows[idx]) DB.fixedCosts.rows[idx].concepto = inp.value;
+  });
+  document.querySelectorAll('[data-fc-idx][data-fc-week]').forEach(inp=>{
+    const idx = +inp.dataset.fcIdx, wi = +inp.dataset.fcWeek;
+    if(DB.fixedCosts.rows[idx] && DB.fixedCosts.rows[idx].tipoContrato!=='individual'){
+      DB.fixedCosts.rows[idx].valoresSemanales[wi] = Number(inp.value)||0;
+    }
+  });
+  refreshFixedCostsCards();
+  persist();
+}
+function attachFixedCostsLiveHandlers(){
+  if(VIEW.name !== 'costosfijos') return;
+  document.querySelectorAll('[data-fc-idx]').forEach(inp=>{
+    if(inp.disabled) return;
+    inp.addEventListener('input', ()=>{
+      const idx = +inp.dataset.fcIdx;
+      if(inp.dataset.fcWeek !== undefined && inp.dataset.fcField==='semana'){
+        const wi = +inp.dataset.fcWeek;
+        DB.fixedCosts.rows[idx].valoresSemanales[wi] = Number(inp.value)||0;
+      } else if(inp.dataset.fcField==='concepto'){
+        DB.fixedCosts.rows[idx].concepto = inp.value;
+      }
+      updateFixedCostsSummary();
+    });
+  });
+}
+
+/* =========================================================================
+   CONTROL DE CONTRATISTAS (uso interno — NUNCA se muestra al cliente)
+   ========================================================================= */
+function viewContratistas(){
+  const fc = DB.fixedCosts;
+  const wk = Number(fc.weeksPerMonth)||4;
+  const nombres = getContratistaNombres();
+  const filtroSemana = VIEW.params.semana || '';
+  const filtroNombre = VIEW.params.nombre || '';
+  if(nombres.length===0){
+    return `
+    <div class="page-head"><div><h1 class="page-title">Control de contratistas</h1><div class="page-sub">Uso interno — esta información nunca aparece en los documentos del cliente</div></div></div>
+    <div class="card pad">${emptyState('◐','Aún no tienes contratistas marcados. Ve a Costos fijos y marca un concepto como "Individual" en la columna Contrato.')}</div>`;
+  }
+  const asignaciones = [];
+  DB.quotes.forEach(q=>{
+    (q.productos||[]).forEach(p=>{
+      if((p.contratista||'').trim()!=='') asignaciones.push({ quote:q, item:p });
+    });
+  });
+
+  const nombresFiltrados = filtroNombre ? nombres.filter(n=>n===filtroNombre) : nombres;
+  const asigFiltradas = asignaciones.filter(a=>{
+    if(filtroNombre && (a.item.contratista||'').toLowerCase()!==filtroNombre.toLowerCase()) return false;
+    if(filtroSemana && String(a.item.contratistaSemana)!==filtroSemana) return false;
+    return true;
+  });
+
+  const totalPendiente = asigFiltradas.filter(a=>(a.item.estadoPagoContratista||'pendiente')==='pendiente').reduce((s,a)=>s+(Number(a.item.contratistaValor)||0),0);
+  const totalPagado = asigFiltradas.filter(a=>(a.item.estadoPagoContratista||'')==='pagado').reduce((s,a)=>s+(Number(a.item.contratistaValor)||0),0);
+
+  return `
+  <div class="page-head">
+    <div><h1 class="page-title">Control de contratistas</h1><div class="page-sub">Uso interno — esta información nunca aparece en los documentos del cliente.</div></div>
+    <button class="btn btn-ghost" onclick="exportContratistasXLSX()">⬇ Exportar a Excel</button>
+  </div>
+  <div class="card pad" style="margin-bottom:18px;">
+    <div class="row-flex" style="gap:12px; flex-wrap:wrap; align-items:flex-end;">
+      <div class="field" style="max-width:200px;"><label>Filtrar por contratista</label>
+        <select onchange="nav('contratistas',Object.assign({},VIEW.params,{nombre:this.value}))">
+          <option value="">Todos</option>
+          ${nombres.map(n=>`<option value="${esc(n)}" ${filtroNombre===n?'selected':''}>${esc(n)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" style="max-width:160px;"><label>Filtrar por semana</label>
+        <select onchange="nav('contratistas',Object.assign({},VIEW.params,{semana:this.value}))">
+          <option value="">Todas las semanas</option>
+          ${Array.from({length:wk},(_,i)=>`<option value="${i+1}" ${filtroSemana===String(i+1)?'selected':''}>Semana ${i+1}</option>`).join('')}
+        </select>
+      </div>
+      <div class="kpi" style="flex:1; min-width:160px; padding:12px 16px; background:var(--rust-100); border-radius:var(--radius);">
+        <div class="kpi-label">Total pendiente de pago</div>
+        <div class="kpi-value" style="font-size:20px; color:var(--rust-600);">${fmtMoney(totalPendiente)}</div>
+      </div>
+      <div class="kpi" style="flex:1; min-width:160px; padding:12px 16px; background:var(--forest-100); border-radius:var(--radius);">
+        <div class="kpi-label">Total pagado</div>
+        <div class="kpi-value" style="font-size:20px; color:var(--forest-600);">${fmtMoney(totalPagado)}</div>
+      </div>
+    </div>
+  </div>
+
+  ${nombresFiltrados.map(nombre=>{
+    const propios = asignaciones.filter(a=>{
+      if((a.item.contratista||'').trim().toLowerCase()!==nombre.toLowerCase()) return false;
+      if(filtroSemana && String(a.item.contratistaSemana)!==filtroSemana) return false;
+      return true;
+    });
+    const totalGeneral = propios.reduce((s,a)=>s+(Number(a.item.contratistaValor)||0),0);
+    const pendiente = propios.filter(a=>(a.item.estadoPagoContratista||'pendiente')==='pendiente').reduce((s,a)=>s+(Number(a.item.contratistaValor)||0),0);
+    const pagado = propios.filter(a=>(a.item.estadoPagoContratista||'')==='pagado').reduce((s,a)=>s+(Number(a.item.contratistaValor)||0),0);
+    const porSemana = Array.from({length:wk},(_,i)=> {
+      const sem = asignaciones.filter(a=>(a.item.contratista||'').trim().toLowerCase()===nombre.toLowerCase() && Number(a.item.contratistaSemana)===i+1);
+      return { total: sem.reduce((s,a)=>s+(Number(a.item.contratistaValor)||0),0), pendiente: sem.filter(a=>(a.item.estadoPagoContratista||'pendiente')==='pendiente').reduce((s,a)=>s+(Number(a.item.contratistaValor)||0),0) };
+    });
+    return `
+    <div class="card pad" style="margin-bottom:18px;">
+      <div class="section-title">${esc(nombre)}
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span class="badge badge-cancel">${fmtMoney(pendiente)} pendiente</span>
+          <span class="badge badge-ok">${fmtMoney(pagado)} pagado</span>
+          <span class="shop-tag">${fmtMoney(totalGeneral)} total</span>
+        </div>
+      </div>
+      ${!filtroSemana ? `<div class="row-flex" style="margin-bottom:12px;">
+        ${porSemana.map((s,i)=>`<div class="card kpi" style="flex:1; min-width:110px; cursor:pointer;" onclick="nav('contratistas',Object.assign({},VIEW.params,{semana:'${i+1}'}))">
+          <div class="kpi-accent" style="background:${s.pendiente>0?'var(--rust-600)':'var(--forest-600)'}"></div>
+          <div class="kpi-label">Semana ${i+1}</div>
+          <div class="kpi-value" style="font-size:16px;">${fmtMoney(s.total)}</div>
+          ${s.pendiente>0?`<div class="small-muted" style="color:var(--rust-600); margin-top:2px;">${fmtMoney(s.pendiente)} pend.</div>`:`<div class="small-muted" style="color:var(--forest-600); margin-top:2px;">Pagado</div>`}
+        </div>`).join('')}
+      </div>` : ''}
+      ${propios.length===0 ? `<div class="small-muted">Sin muebles asignados en este filtro.</div>` : `
+      <div class="table-wrap"><table>
+        <tr><th>Semana</th><th>Cliente</th><th>Mueble</th><th>Valor</th><th>Estado pago</th></tr>
+        ${propios.sort((a,b)=>(Number(a.item.contratistaSemana)||0)-(Number(b.item.contratistaSemana)||0)).map(a=>{
+          const c = getClient(a.quote.clienteId);
+          const pagado = (a.item.estadoPagoContratista||'pendiente')==='pagado';
+          return `<tr class="row-hover">
+            <td>Semana ${a.item.contratistaSemana||1}</td>
+            <td style="cursor:pointer" onclick="nav('cotizador',{id:'${a.quote.id}'})">${esc(c?c.nombre:'—')}</td>
+            <td style="cursor:pointer" onclick="nav('cotizador',{id:'${a.quote.id}'})">${esc(a.item.nombre)}</td>
+            <td class="mono">${fmtMoney(a.item.contratistaValor)}</td>
+            <td><select onchange="updateEstadoPagoContratista('${a.quote.id}','${a.item.id}',this.value)">
+              <option value="pendiente" ${!pagado?'selected':''}>Pendiente</option>
+              <option value="pagado" ${pagado?'selected':''}>Pagado</option>
+            </select></td>
+          </tr>`;
+        }).join('')}
+      </table></div>`}
+    </div>`;
+  }).join('')}
+  `;
+}
+function updateEstadoPagoContratista(quoteId, itemId, value){
+  const q = getQuote(quoteId);
+  if(!q) return;
+  const p = (q.productos||[]).find(p=>p.id===itemId);
+  if(!p) return;
+  p.estadoPagoContratista = value;
+  persist();
+  render();
+}
+async function exportContratistasXLSX(){
+  if(!checkExcelLib()) return;
+  const columns = [
+    {header:'Contratista', key:'contratista', width:20},
+    {header:'Semana', key:'semana', width:12},
+    {header:'Cliente', key:'cliente', width:26},
+    {header:'Mueble / Producto', key:'mueble', width:30},
+    {header:'Valor', key:'valor', width:16, money:true},
+    {header:'Estado de pago', key:'estado', width:16},
+    {header:'N° Cotización', key:'numero', width:18},
+  ];
+  const rows = [];
+  const nombres = getContratistaNombres();
+  nombres.forEach(nombre=>{
+    DB.quotes.forEach(q=>{
+      (q.productos||[]).forEach(p=>{
+        if((p.contratista||'').trim().toLowerCase()===nombre.toLowerCase()){
+          const c = getClient(q.clienteId);
+          rows.push({ contratista: nombre, semana: 'Semana '+(p.contratistaSemana||1), cliente: c?c.nombre:'', mueble: p.nombre||'', valor: Number(p.contratistaValor)||0, estado: (p.estadoPagoContratista||'pendiente')==='pagado'?'Pagado':'Pendiente', numero: docDisplayNumber('COT', q.numero) });
+        }
+      });
+    });
+  });
+  rows.sort((a,b)=> (a.contratista+a.semana).localeCompare(b.contratista+b.semana));
+  const wb = await buildStyledWorkbook('Control de Contratistas', columns, rows);
+  await downloadWorkbook(wb, 'JUMANAR_Contratistas_'+todayStr()+'.xlsx');
+}
+
+/* =========================================================================
+   HISTORIAL
+   ========================================================================= */
+function viewHistorial(){
+  const term = VIEW.params.q || '';
+  let results = {clients:[], quotes:[], ops:[], contratistas:[]};
+  if(term.trim().length>0){
+    const s = term.toLowerCase();
+    results.clients = DB.clients.filter(c=> (c.nombre||'').toLowerCase().includes(s) || (c.telefono||'').includes(s));
+    results.quotes = DB.quotes.filter(q=> (q.numero||'').toLowerCase().includes(s) || quoteProductSummary(q).toLowerCase().includes(s) || (q.fecha||'').includes(s));
+    results.ops = DB.productionOrders.filter(o=> (o.numero||'').toLowerCase().includes(s));
+    DB.quotes.forEach(q=>{
+      (q.productos||[]).forEach(p=>{
+        if((p.contratista||'').toLowerCase().includes(s) && p.contratista.trim()!==''){
+          const c = getClient(q.clienteId);
+          if(!results.contratistas.find(r=>r.quoteId===q.id && r.itemId===p.id)){
+            results.contratistas.push({ quoteId:q.id, itemId:p.id, contratista:p.contratista, mueble:p.nombre, cliente:c?c.nombre:'', numero:q.numero });
+          }
+        }
+      });
+    });
+  }
+  const hasSearch = term.trim().length>0;
+  return `
+  <div class="page-head"><div><h1 class="page-title">Historial</h1><div class="page-sub">Busca por cliente, producto, fecha, N° de cotización, orden de producción o contratista</div></div></div>
+  <div class="card pad">
+    <div class="searchbox" style="max-width:420px; margin-bottom:18px;">
+      <input type="text" placeholder="Escribe para buscar en todo el sistema..." value="${esc(term)}" oninput="nav('historial',{q:this.value})">
+    </div>
+    ${!hasSearch? emptyState('⌕','Escribe algo para buscar en clientes, cotizaciones, órdenes o contratistas.') : `
+      ${results.clients.length>0? `<div class="section-title">Clientes</div>${results.clients.map(c=>`<div class="row-hover" style="padding:8px; cursor:pointer" onclick="nav('clientes',{detail:'${c.id}'})">${esc(c.nombre)} — ${esc(c.telefono||'')}</div>`).join('')}<div class="divider"></div>`:''}
+      ${results.quotes.length>0? `<div class="section-title">Cotizaciones / Ventas</div>${results.quotes.map(q=>{const c=getClient(q.clienteId);return `<div class="row-hover" style="padding:8px; cursor:pointer" onclick="nav('cotizador',{id:'${q.id}'})"><span class="shop-tag">${q.numero}</span> ${esc(quoteProductSummary(q))} — ${esc(c?c.nombre:'')} (${fmtDate(q.fecha)})</div>`;}).join('')}<div class="divider"></div>`:''}
+      ${results.ops.length>0? `<div class="section-title">Órdenes de producción</div>${results.ops.map(o=>`<div class="row-hover" style="padding:8px; cursor:pointer" onclick="nav('cotizador',{id:'${o.quoteId}'})"><span class="shop-tag">${o.numero}</span> ${OP_LABELS[o.estado]}</div>`).join('')}<div class="divider"></div>`:''}
+      ${results.contratistas.length>0? `<div class="section-title">Resultados por contratista</div>${results.contratistas.map(r=>`<div class="row-hover" style="padding:8px; cursor:pointer" onclick="nav('cotizador',{id:'${r.quoteId}'})"><span class="shop-tag">${esc(r.numero)}</span> <b>${esc(r.contratista)}</b> — ${esc(r.mueble)} (${esc(r.cliente)})</div>`).join('')}<div class="divider"></div>`:''}
+      ${(results.clients.length+results.quotes.length+results.ops.length+results.contratistas.length)===0? emptyState('⌕','Sin resultados.') : ''}
+    `}
+  </div>`;
+}
+
+/* =========================================================================
+   DATOS DE EMPRESA (usados en los PDF de Cotización y Cuenta de Cobro)
+   ========================================================================= */
+function empField(label, key, placeholder){
+  const val = DB.empresa[key] || '';
+  return `<div class="field"><label>${label}</label><input type="text" value="${esc(val)}" placeholder="${esc(placeholder||'')}" oninput="DB.empresa['${key}']=this.value; persist();"></div>`;
+}
+function viewEmpresa(){
+  const e = DB.empresa;
+  return `
+  <div class="page-head">
+    <div><h1 class="page-title">Datos de empresa</h1><div class="page-sub">Esta información se usa para generar los PDF de Cotización y Cuenta de Cobro</div></div>
+  </div>
+
+  <div class="card pad" style="margin-bottom:18px;">
+    <div class="section-title">Identidad</div>
+    <div class="row-flex">
+      ${empField('Razón social', 'razonSocial')}
+      ${empField('Eslogan / actividad', 'tagline')}
+    </div>
+    ${empField('Frase de marca (pie de documento)', 'fraseMarca')}
+    ${empField('Representante(s)', 'representantes')}
+    <div class="row-flex">
+      ${empField('NIT / C.C.', 'nit', '[NIT o C.C. del titular]')}
+      ${empField('Ciudad de expedición', 'ciudad')}
+    </div>
+    <div class="row-flex">
+      ${empField('Dirección', 'direccion')}
+      ${empField('Teléfono / WhatsApp', 'telefono')}
+    </div>
+    ${empField('Correo / Web', 'correoWeb')}
+  </div>
+
+  <div class="card pad" style="margin-bottom:18px;">
+    <div class="section-title">Política comercial</div>
+    <div class="row-flex">
+      <div class="field"><label>Validez de la cotización (días)</label><input type="number" min="1" value="${e.validezDiasCotizacion}" oninput="DB.empresa.validezDiasCotizacion=this.value; persist();"></div>
+      <div class="field"><label>% de anticipo sugerido</label><input type="number" min="0" max="100" value="${Math.round((Number(e.anticipoPorcentaje)||0)*100)}" oninput="DB.empresa.anticipoPorcentaje=(Number(this.value)||0)/100; persist();"></div>
+    </div>
+    ${empField('Forma de pago (texto por defecto)', 'formaPagoTexto')}
+    ${empField('Medio de pago (cotización)', 'medioPagoTexto')}
+    ${empField('Personalización incluida', 'personalizacionTexto')}
+    ${empField('Garantía', 'garantiaTexto')}
+    ${empField('Modelo productivo', 'modeloProductivoTexto')}
+  </div>
+
+  <div class="card pad">
+    <div class="section-title">Datos bancarios (para la Cuenta de Cobro)</div>
+    <div class="row-flex">
+      ${empField('Banco', 'banco')}
+      <div class="field"><label>Tipo de cuenta</label>
+        <select onchange="DB.empresa.tipoCuenta=this.value; persist();">
+          <option value="Ahorros" ${e.tipoCuenta==='Ahorros'?'selected':''}>Ahorros</option>
+          <option value="Corriente" ${e.tipoCuenta==='Corriente'?'selected':''}>Corriente</option>
+        </select>
+      </div>
+    </div>
+    <div class="row-flex">
+      ${empField('Número de cuenta', 'numeroCuenta')}
+      ${empField('Titular de la cuenta', 'titularCuenta')}
+    </div>
+    ${empField('Medio de pago (cuenta de cobro)', 'medioPagoCCTexto')}
+  </div>
+
+  <div class="card pad" style="margin-top:18px;">
+    <div class="section-title">Numeración de documentos</div>
+    <div class="small-muted" style="margin-bottom:12px;">Configura el prefijo y el número actual de cada tipo de documento. El número actual es el último generado — el siguiente será ese número + 1.</div>
+    <div class="row-flex">
+      <div class="field"><label>Prefijo cotizaciones</label><input type="text" value="${esc(e.prefijoCot||'COT')}" placeholder="COT" oninput="DB.empresa.prefijoCot=this.value; persist();"></div>
+      <div class="field"><label>Prefijo cuentas de cobro</label><input type="text" value="${esc(e.prefijoCC||'CC')}" placeholder="CC" oninput="DB.empresa.prefijoCC=this.value; persist();"></div>
+      <div class="field"><label>Prefijo órdenes de producción</label><input type="text" value="${esc(e.prefijoOP||'OP')}" placeholder="OP" oninput="DB.empresa.prefijoOP=this.value; persist();"></div>
+    </div>
+    <div class="row-flex">
+      <div class="field"><label>Número actual de cotizaciones</label><input type="number" min="0" value="${DB.counters.quote||0}" oninput="DB.counters.quote=Number(this.value)||0; persist();" title="El siguiente número generado será este valor + 1"></div>
+      <div class="field"><label>Número actual de cuentas de cobro</label><input type="number" min="0" value="${DB.counters.cc||0}" oninput="DB.counters.cc=Number(this.value)||0; persist();"></div>
+      <div class="field"><label>Número actual de órdenes de producción</label><input type="number" min="0" value="${DB.counters.op||0}" oninput="DB.counters.op=Number(this.value)||0; persist();"></div>
+    </div>
+    <div class="small-muted">Ejemplo: si tienes 50 cotizaciones en papel, pon el número actual en 50 para que la siguiente sea la 51.</div>
+  </div>`;
+}
+
+/* =========================================================================
+   EXPORTAR DATOS — Excel (.xlsx) con identidad visual JUMANAR aplicada
+   ========================================================================= */
+async function buildStyledWorkbook(sheetTitle, columns, rows){
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'JUMANAR';
+  wb.created = new Date();
+  const ws = wb.addWorksheet(sheetTitle.slice(0,31));
+  const colCount = columns.length;
+
+  ws.mergeCells(1,1,1,colCount);
+  const brandCell = ws.getCell(1,1);
+  brandCell.value = 'JUMANAR';
+  brandCell.font = { name:'Arial', bold:true, size:16, color:{argb:'FFF6F3EC'} };
+  brandCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F4D4D'} };
+  brandCell.alignment = { vertical:'middle', horizontal:'left', indent:1 };
+  ws.getRow(1).height = 28;
+
+  ws.mergeCells(2,1,2,colCount);
+  const subCell = ws.getCell(2,1);
+  subCell.value = sheetTitle + '  ·  Generado el ' + new Date().toLocaleDateString('es-CO');
+  subCell.font = { name:'Arial', italic:true, size:10, color:{argb:'FF7B7062'} };
+  subCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF6F3EC'} };
+  subCell.alignment = { vertical:'middle', horizontal:'left', indent:1 };
+  ws.getRow(2).height = 18;
+
+  ws.getRow(3).height = 6;
+
+  const headerRowIdx = 4;
+  const headerRow = ws.getRow(headerRowIdx);
+  columns.forEach((c,i)=>{
+    const cell = headerRow.getCell(i+1);
+    cell.value = c.header;
+    cell.font = { name:'Arial', bold:true, size:10, color:{argb:'FF1F4D4D'} };
+    cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFA7B897'} };
+    cell.alignment = { vertical:'middle', horizontal:'left' };
+    cell.border = { bottom:{style:'thin', color:{argb:'FF1F4D4D'}} };
+  });
+  headerRow.height = 20;
+
+  rows.forEach((r, ri)=>{
+    const row = ws.getRow(headerRowIdx+1+ri);
+    columns.forEach((c,ci)=>{
+      const cell = row.getCell(ci+1);
+      cell.value = r[c.key] === undefined ? '' : r[c.key];
+      cell.font = { name:'Arial', size:10, color:{argb:'FF20302D'} };
+      if(c.money){ cell.numFmt = '$#,##0'; cell.alignment = { horizontal:'right' }; }
+      cell.border = { bottom:{style:'hair', color:{argb:'FFE3DACB'}} };
+      if(ri % 2 === 1){ cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFBFAF6'} }; }
+    });
+  });
+
+  columns.forEach((c,i)=>{ ws.getColumn(i+1).width = c.width || 18; });
+  return wb;
+}
+async function downloadWorkbook(wb, filename){
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function checkExcelLib(){
+  if(typeof ExcelJS === 'undefined'){ toast('No se pudo cargar el generador de Excel. Revisa tu conexión e intenta de nuevo.'); return false; }
+  return true;
+}
+async function exportClientesXLSX(){
+  if(!checkExcelLib()) return;
+  const columns = [
+    {header:'Nombre', key:'nombre', width:26},
+    {header:'Teléfono', key:'telefono', width:16},
+    {header:'Ciudad', key:'ciudad', width:16},
+    {header:'Dirección', key:'direccion', width:26},
+    {header:'Correo', key:'email', width:24},
+    {header:'C.C. / NIT', key:'cedulaNit', width:16},
+    {header:'Total comprado', key:'totalComprado', width:18, money:true},
+    {header:'Saldo pendiente', key:'saldo', width:18, money:true},
+    {header:'Observaciones', key:'observaciones', width:30},
+  ];
+  const rows = DB.clients.map(c=>{
+    const s = clientStats(c.id);
+    return { nombre:c.nombre, telefono:c.telefono, ciudad:c.ciudad, direccion:c.direccion, email:c.email, cedulaNit:c.cedulaNit, totalComprado:s.totalComprado, saldo:s.saldo, observaciones:c.observaciones };
+  });
+  const wb = await buildStyledWorkbook('Historial de Clientes', columns, rows);
+  await downloadWorkbook(wb, 'JUMANAR_Clientes_'+todayStr()+'.xlsx');
+}
+async function exportCotizacionesXLSX(){
+  if(!checkExcelLib()) return;
+  const columns = [
+    {header:'N° Cotización', key:'numero', width:20},
+    {header:'Fecha', key:'fecha', width:14},
+    {header:'Cliente', key:'cliente', width:26},
+    {header:'Producto', key:'producto', width:30},
+    {header:'Referencia', key:'referencia', width:14},
+    {header:'Medidas', key:'medidas', width:18},
+    {header:'Cantidad', key:'cantidad', width:10},
+    {header:'Precio unitario', key:'precioUnitario', width:16, money:true},
+    {header:'Subtotal producto', key:'subtotal', width:18, money:true},
+    {header:'Total cotización', key:'valor', width:16, money:true},
+    {header:'Estado', key:'estado', width:14},
+  ];
+  const rows = [];
+  DB.quotes.slice().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).forEach(q=>{
+    const c = getClient(q.clienteId);
+    const calc = calcQuote(q);
+    const estadoTxt = q.estado==='cotizacion' ? 'Cotización' : q.estado==='cancelada' ? 'Cancelada' : 'Vendida';
+    const items = (q.productos||[]).filter(p=>(p.nombre||'').trim()!=='');
+    if(items.length===0){
+      rows.push({ numero: docDisplayNumber('COT', q.numero), fecha: fmtDate(q.fecha), cliente: c?c.nombre:'', producto:'(sin productos)', referencia:'', medidas:'', cantidad:0, precioUnitario:0, subtotal:0, valor: calc.precioVenta, estado: estadoTxt });
+    } else {
+      items.forEach((p,i)=>{
+        rows.push({ numero: i===0 ? docDisplayNumber('COT', q.numero) : '', fecha: i===0 ? fmtDate(q.fecha) : '', cliente: i===0 ? (c?c.nombre:'') : '', producto: p.nombre||'', referencia: p.referencia||'', medidas: p.medidas||'', cantidad: Number(p.cantidad)||0, precioUnitario: Number(p.precioUnitario)||0, subtotal: (Number(p.cantidad)||0)*(Number(p.precioUnitario)||0), valor: i===0 ? calc.precioVenta : 0, estado: i===0 ? estadoTxt : '' });
+      });
+    }
+  });
+  const wb = await buildStyledWorkbook('Historial de Cotizaciones', columns, rows);
+  await downloadWorkbook(wb, 'JUMANAR_Cotizaciones_'+todayStr()+'.xlsx');
+}
+async function exportVentasXLSX(){
+  if(!checkExcelLib()) return;
+  const columns = [
+    {header:'N° Cotización', key:'numero', width:20},
+    {header:'Cliente', key:'cliente', width:26},
+    {header:'Producto', key:'producto', width:30},
+    {header:'Referencia', key:'referencia', width:14},
+    {header:'Cant.', key:'cantidad', width:8},
+    {header:'Precio unitario', key:'precioUnitario', width:16, money:true},
+    {header:'Subtotal', key:'subtotal', width:16, money:true},
+    {header:'Total cotización', key:'valor', width:16, money:true},
+    {header:'Anticipo', key:'anticipo', width:16, money:true},
+    {header:'Saldo', key:'saldo', width:16, money:true},
+    {header:'Estado de pago', key:'estadoPago', width:16},
+    {header:'Fecha de venta', key:'fechaVenta', width:16},
+  ];
+  const rows = [];
+  DB.quotes.filter(q=>q.estado==='vendida').sort((a,b)=>((b.venta&&b.venta.fecha)||'').localeCompare((a.venta&&a.venta.fecha)||'')).forEach(q=>{
+    const c = getClient(q.clienteId);
+    const calc = calcQuote(q);
+    const items = (q.productos||[]).filter(p=>(p.nombre||'').trim()!=='');
+    if(items.length===0){
+      rows.push({ numero: docDisplayNumber('COT', q.numero), cliente: c?c.nombre:'', producto:'(sin productos)', referencia:'', cantidad:0, precioUnitario:0, subtotal:0, valor: calc.precioVenta, anticipo: Number(q.venta.anticipo)||0, saldo: saldoPendiente(q), estadoPago: q.venta.estadoPago, fechaVenta: fmtDate(q.venta.fecha) });
+    } else {
+      items.forEach((p,i)=>{
+        rows.push({ numero: i===0 ? docDisplayNumber('COT', q.numero) : '', cliente: i===0 ? (c?c.nombre:'') : '', producto: p.nombre||'', referencia: p.referencia||'', cantidad: Number(p.cantidad)||0, precioUnitario: Number(p.precioUnitario)||0, subtotal: (Number(p.cantidad)||0)*(Number(p.precioUnitario)||0), valor: i===0 ? calc.precioVenta : 0, anticipo: i===0 ? (Number(q.venta.anticipo)||0) : 0, saldo: i===0 ? saldoPendiente(q) : 0, estadoPago: i===0 ? q.venta.estadoPago : '', fechaVenta: i===0 ? fmtDate(q.venta.fecha) : '' });
+      });
+    }
+  });
+  const wb = await buildStyledWorkbook('Historial de Ventas', columns, rows);
+  await downloadWorkbook(wb, 'JUMANAR_Ventas_'+todayStr()+'.xlsx');
+}
+async function exportProduccionXLSX(){
+  if(!checkExcelLib()) return;
+  const columns = [
+    {header:'N° OP', key:'numero', width:16},
+    {header:'Cliente', key:'cliente', width:26},
+    {header:'Producto', key:'producto', width:30},
+    {header:'Inicio', key:'inicio', width:14},
+    {header:'Entrega estimada', key:'entrega', width:18},
+    {header:'Estado', key:'estado', width:18},
+  ];
+  const rows = DB.productionOrders.slice().sort((a,b)=>(a.fechaEntregaEstimada||'9999').localeCompare(b.fechaEntregaEstimada||'9999')).map(o=>{
+    const q = getQuote(o.quoteId); const c = q?getClient(q.clienteId):null;
+    return { numero:o.numero, cliente:c?c.nombre:'', producto:q?quoteProductSummary(q):'', inicio: fmtDate(o.fechaInicio), entrega: fmtDate(o.fechaEntregaEstimada), estado: OP_LABELS[o.estado] };
+  });
+  const wb = await buildStyledWorkbook('Historial de Producción', columns, rows);
+  await downloadWorkbook(wb, 'JUMANAR_Produccion_'+todayStr()+'.xlsx');
+}
+async function exportCostosFijosXLSX(){
+  if(!checkExcelLib()) return;
+  const calc = calcFixedCosts();
+  const columns = [
+    {header:'', key:'etiqueta', width:16},
+    ...calc.semanas.map(s=>({header:'Semana '+s.n, key:'semana'+s.n, width:16, money:true})),
+    {header:'Consolidado del mes', key:'mes', width:20, money:true},
+  ];
+  const filaTotal = { etiqueta: 'Total' };
+  const filaSocio = { etiqueta: 'Por socio ('+calc.partners+')' };
+  calc.semanas.forEach(s=>{ filaTotal['semana'+s.n] = s.total; filaSocio['semana'+s.n] = s.porSocio; });
+  filaTotal.mes = calc.promedio;
+  filaSocio.mes = calc.promedioPorSocio;
+  const rows = [filaTotal, filaSocio];
+  const wb = await buildStyledWorkbook('Costos Fijos', columns, rows);
+  await downloadWorkbook(wb, 'JUMANAR_CostosFijos_'+todayStr()+'.xlsx');
+}
+function viewExportar(){
+  const tpls = DB.materialTemplates || [];
+  return `
+  <div class="page-head">
+    <div><h1 class="page-title">Exportar datos</h1><div class="page-sub">Descarga tu información en archivos Excel (.xlsx), con la identidad visual de JUMANAR aplicada</div></div>
+  </div>
+  <div class="grid-2col">
+    <div class="card pad">
+      <div class="section-title">Exportar a Excel</div>
+      <div class="small-muted" style="margin-bottom:14px;">Descarga el archivo que necesites y en Google Sheets ve a Archivo → Importar → Subir. En Excel, ábrelo con doble clic.</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="btn btn-primary" style="justify-content:flex-start;" onclick="exportClientesXLSX()">⬇ Clientes</button>
+        <button class="btn btn-primary" style="justify-content:flex-start;" onclick="exportCotizacionesXLSX()">⬇ Cotizaciones (con ítems)</button>
+        <button class="btn btn-primary" style="justify-content:flex-start;" onclick="exportVentasXLSX()">⬇ Ventas (con ítems)</button>
+        <button class="btn btn-primary" style="justify-content:flex-start;" onclick="exportProduccionXLSX()">⬇ Producción</button>
+        <button class="btn btn-primary" style="justify-content:flex-start;" onclick="exportCostosFijosXLSX()">⬇ Costos fijos</button>
+        <button class="btn btn-primary" style="justify-content:flex-start;" onclick="exportContratistasXLSX()">⬇ Contratistas</button>
+      </div>
+      <div class="small-muted" style="margin-top:14px;">Esta exportación no modifica ni borra ninguno de tus datos — solo genera una copia descargable.</div>
+    </div>
+    <div class="card pad">
+      <div class="section-title">Plantillas de materiales</div>
+      ${tpls.length===0 ? `<div class="small-muted">Aún no tienes plantillas guardadas. Créalas desde el editor de cotización con el botón "💾 Guardar como plantilla".</div>` : `
+      <div class="table-wrap"><table>
+        <tr><th>Nombre</th><th>Ítems</th><th></th></tr>
+        ${tpls.map((t,i)=>`<tr>
+          <td>${esc(t.nombre)}</td>
+          <td class="small-muted">${(t.materiales||[]).length} concepto(s)</td>
+          <td><div class="icon-btn-row">
+            <button class="btn btn-ghost btn-sm" onclick="previewMaterialTemplate('${t.id}')">Ver</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteMaterialTemplate('${t.id}')">✕</button>
+          </div></td>
+        </tr>`).join('')}
+      </table></div>`}
+    </div>
+  </div>`;
+}
+function previewMaterialTemplate(id){
+  const tpl = (DB.materialTemplates||[]).find(t=>t.id===id);
+  if(!tpl) return;
+  showModal(`
+    <h3>Plantilla: ${esc(tpl.nombre)}</h3>
+    <div class="table-wrap"><table>
+      <tr><th>Material / concepto</th><th>Cantidad</th><th>Unidad</th><th>Costo unitario</th></tr>
+      ${(tpl.materiales||[]).map(m=>`<tr><td>${esc(m.material)}</td><td>${m.cantidad}</td><td>${esc(m.unidad)}</td><td class="mono">${fmtMoney(m.costoUnitario)}</td></tr>`).join('')}
+    </table></div>
+    <div class="modal-close-row"><button class="btn btn-primary" onclick="closeModal()">Cerrar</button></div>
+  `);
+}
+function deleteMaterialTemplate(id){
+  showConfirm('¿Eliminar esta plantilla de materiales?', ()=>{
+    DB.materialTemplates = (DB.materialTemplates||[]).filter(t=>t.id!==id);
+    persist(); render();
+  });
+}
+
+/* =========================================================================
+   GLOBAL CLICK DELEGATION (nav + simple actions)
+   ========================================================================= */
+document.addEventListener('click', function(e){
+  const navEl = e.target.closest('[data-nav]');
+  if(navEl){
+    const name = navEl.dataset.nav;
+    const params = {};
+    if(navEl.dataset.paramId) params.id = navEl.dataset.paramId;
+    nav(name, params);
+    return;
+  }
+  const actionEl = e.target.closest('[data-action]');
+  if(actionEl){
+    const act = actionEl.dataset.action;
+    if(act==='new-client') openClientModal(null);
+    if(act==='new-model') openModelModal(null);
+  }
+});
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+loadDB();
+</script>
+</body>
+</html>

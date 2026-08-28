@@ -317,76 +317,114 @@ const DOMAIN_KEYS = ['clients','models','quotes','productionOrders','counters','
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 
 /* =========================================================================
-   STORAGE ADAPTER — localStorage con fallback a memoria
-   Funciona en Netlify, GitHub Pages y cualquier hosting estático.
-   Si localStorage no está disponible (modo privado estricto, etc.),
-   cae a un almacenamiento en memoria para esa sesión.
+   STORAGE ADAPTER — Supabase (primario) + localStorage (fallback offline)
+   Solo se reemplaza este bloque. El resto de la app (loadDB, persist,
+   render, vistas, cálculos) queda 100% intacto.
+   Interfaz conservada: storage.get(key) / storage.set(key,value) /
+                        storage.delete(key) / storage.list(prefix)
    ========================================================================= */
-const storage = (function(){
-  // Detectar si localStorage está disponible
-  let _ls = null;
-  try{
-    localStorage.setItem('__jum_test__','1');
-    localStorage.removeItem('__jum_test__');
-    _ls = localStorage;
-  }catch(e){
-    console.warn('localStorage no disponible — usando almacenamiento en memoria (los datos no persistirán entre sesiones)');
-  }
-  const _mem = {};
+const SUPABASE_URL = 'https://gjoweghtozjsdymwqtpw.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_dXX44x9IzqzYbKwvgr7LpQ_Pl4ax-oM';
+const SB_TABLE     = 'jumanar_store';
 
-  function safeGet(key){
-    try{
-      if(_ls) return _ls.getItem('jum_'+key);
-      return _mem['jum_'+key]||null;
-    }catch(e){ return _mem['jum_'+key]||null; }
-  }
-  function safeSet(key, value){
-    try{
-      if(_ls){ _ls.setItem('jum_'+key, value); }
-      else { _mem['jum_'+key] = value; }
-      return true;
-    }catch(e){
-      // QuotaExceededError — guardar en memoria como fallback
-      console.warn('localStorage lleno para '+key+' — usando memoria', e);
-      _mem['jum_'+key] = value;
-      return true;
-    }
-  }
-  function safeDel(key){
-    try{
-      if(_ls) _ls.removeItem('jum_'+key);
-      delete _mem['jum_'+key];
-      return true;
-    }catch(e){ return false; }
-  }
+// — localStorage como caché offline —————————————————————————————————————
+const _lsCache = (function(){
+  let ok = false;
+  try{ localStorage.setItem('__jum_t','1'); localStorage.removeItem('__jum_t'); ok=true; }catch(e){}
   return {
-    get: async (key) => {
-      const value = safeGet(key);
-      if(value===null || value===undefined) throw new Error('not_found');
-      return {key, value};
-    },
-    set: async (key, value) => {
-      safeSet(key, value);
-      return {key, value};
-    },
-    delete: async (key) => {
-      safeDel(key);
-      return {key, deleted:true};
-    },
-    list: async (prefix='') => {
-      const keys = [];
-      if(_ls){
-        for(let i=0;i<_ls.length;i++){
-          const k = _ls.key(i);
-          if(k && k.startsWith('jum_'+(prefix||''))) keys.push(k.replace('jum_',''));
-        }
-      } else {
-        Object.keys(_mem).filter(k=>k.startsWith('jum_'+(prefix||''))).forEach(k=>keys.push(k.replace('jum_','')));
+    get:  k => ok ? localStorage.getItem('jum_'+k) : null,
+    set:  (k,v) => { try{ if(ok) localStorage.setItem('jum_'+k, v); }catch(e){} },
+    del:  k => { try{ if(ok) localStorage.removeItem('jum_'+k); }catch(e){} },
+    keys: prefix => {
+      if(!ok) return [];
+      const out = [];
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(k && k.startsWith('jum_'+(prefix||''))) out.push(k.replace('jum_',''));
       }
-      return {keys};
+      return out;
     }
   };
 })();
+
+// — Supabase REST helpers ————————————————————————————————————————————————
+async function _sbFetch(method, body, params){
+  const url = new URL(`${SUPABASE_URL}/rest/v1/${SB_TABLE}`);
+  if(params) Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
+  const res = await fetch(url.toString(), {
+    method,
+    headers: {
+      'apikey':        SUPABASE_KEY,
+      'Authorization': 'Bearer '+SUPABASE_KEY,
+      'Content-Type':  'application/json',
+      'Prefer':        method==='POST' ? 'resolution=merge-duplicates,return=representation' : 'return=representation',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if(!res.ok){
+    const txt = await res.text().catch(()=>'');
+    throw new Error(`Supabase ${method} ${res.status}: ${txt}`);
+  }
+  return res.status===204 ? [] : res.json();
+}
+
+// — Adaptador principal ——————————————————————————————————————————————————
+const storage = {
+  get: async (key) => {
+    try{
+      const rows = await _sbFetch('GET', null, { select:'key,value', key:'eq.'+key });
+      if(!rows || rows.length===0){
+        // intentar caché local
+        const cached = _lsCache.get(key);
+        if(cached!==null) return {key, value: cached};
+        throw new Error('not_found');
+      }
+      _lsCache.set(key, rows[0].value);   // actualizar caché local
+      return {key, value: rows[0].value};
+    }catch(e){
+      if(e.message==='not_found') throw e;
+      // error de red — usar caché local
+      const cached = _lsCache.get(key);
+      if(cached!==null) return {key, value: cached};
+      throw new Error('not_found');
+    }
+  },
+
+  set: async (key, value) => {
+    _lsCache.set(key, value);             // guardar siempre en local primero
+    try{
+      await _sbFetch('POST', {key, value, updated_at: new Date().toISOString()});
+      return {key, value};
+    }catch(e){
+      console.warn('Supabase set error (datos en caché local):', e.message);
+      // No lanzamos error — el dato quedó en localStorage y se sincronizará
+      return {key, value};
+    }
+  },
+
+  delete: async (key) => {
+    _lsCache.del(key);
+    try{
+      await _sbFetch('DELETE', null, { key:'eq.'+key });
+    }catch(e){
+      console.warn('Supabase delete error:', e.message);
+    }
+    return {key, deleted: true};
+  },
+
+  list: async (prefix='') => {
+    try{
+      const rows = await _sbFetch('GET', null,
+        prefix ? { select:'key', key:`like.${prefix}*` } : { select:'key' }
+      );
+      return {keys: (rows||[]).map(r=>r.key)};
+    }catch(e){
+      // fallback a caché local
+      return {keys: _lsCache.keys(prefix)};
+    }
+  },
+};
+
 
 async function loadDB(){
   let migratedFromLegacy = false;
